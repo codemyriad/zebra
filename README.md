@@ -1,6 +1,10 @@
+<p align="center">
+  <img src="logo.svg" alt="Zebra logo" width="200"/>
+</p>
+
 # Zebra
 
-Zebra is a browser extension that caches conversations with LLMs (chatgpt and claude) and stores them locally.
+Zebra is a browser extension that caches conversations with LLMs (ChatGPT and Claude) and stores them locally.
 
 ## Development
 
