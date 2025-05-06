@@ -40,7 +40,9 @@ export async function initSqlite() {
 
   // return { promiser, dbId }; // Or just the promiser, or a more abstracted DB object
 
-  alert("SQLite Handler: Not fully implemented. Ensure WASM files are in public/wasm/ and uncomment/complete this file.");
+  console.warn(
+    "SQLite Handler: Not fully implemented. Ensure WASM files are in public/wasm/ and uncomment/complete this file.",
+  );
   return null;
 }
 
