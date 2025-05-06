@@ -20,6 +20,6 @@
     "vite": "^5.2.11"
   },
   "dependencies": {
-    "@sqlite.org/sqlite-wasm": "^3.46.0"
+    "@sqlite.org/sqlite-wasm": "^3.49.1-build4"
   }
 }
