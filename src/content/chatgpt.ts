@@ -1,0 +1,13 @@
+console.log("Zebra Content Script loaded for ChatGPT.");
+
+// Example: Send a message to the background script
+chrome.runtime.sendMessage({ greeting: "hello from chatgpt content script" }, (response) => {
+  if (chrome.runtime.lastError) {
+    console.error("Error sending message from chatgpt.ts:", chrome.runtime.lastError.message);
+  } else {
+    console.log("Response from background:", response);
+  }
+});
+
+// TODO: Add logic to interact with ChatGPT's DOM
+// e.g., identify conversation elements, cache them, etc.

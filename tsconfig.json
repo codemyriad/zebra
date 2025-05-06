@@ -1,0 +1,22 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "isolatedModules": true,
+    "moduleResolution": "bundler", // or "node" if "bundler" causes issues
+    "types": ["svelte", "chrome"],
+    "outDir": "dist/tsc_output", // Temporary output dir for TS, Vite handles final bundling
+    "strict": true,
+    "noEmit": true, // Vite handles emit, TS is for type checking
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "vite.config.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
