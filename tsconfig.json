@@ -10,6 +10,7 @@
     "isolatedModules": true,
     "moduleResolution": "bundler", // or "node" if "bundler" causes issues
     "types": ["svelte", "chrome"],
+    "lib": ["ESNext", "DOM", "WebWorker"], // Added "WebWorker"
     "outDir": "dist/tsc_output", // Temporary output dir for TS, Vite handles final bundling
     "strict": true,
     "noEmit": true, // Vite handles emit, TS is for type checking
