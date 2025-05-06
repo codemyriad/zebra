@@ -11,13 +11,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // Example: Initialize SQLite WASM or other background tasks
-// import { initSqlite } from '../lib/sqlite/sqlite-handler';
-// (async () => {
-//   try {
-//     const db = await initSqlite();
-//     console.log("SQLite initialized in background", db);
-//     // Perform database operations
-//   } catch (error) {
-//     console.error("Failed to initialize SQLite in background:", error);
-//   }
-// })();
+import { initSqlite } from "../lib/sqlite/sqlite-handler";
+(async () => {
+  try {
+    const db = await initSqlite();
+    console.log("SQLite initialized in background", db);
+    // Perform database operations
+  } catch (error) {
+    console.error("Failed to initialize SQLite in background:", error);
+  }
+})();
