@@ -1,0 +1,5 @@
+# This file ensures the public/wasm directory is created.
+# Please download the official SQLite WASM files (e.g., sqlite3.wasm, sqlite3-worker.js or sqlite3-opfs-async-proxy.js)
+# from the @sqlite.org/sqlite-wasm package (node_modules/@sqlite.org/sqlite-wasm/dist/...)
+# and place them in this directory.
+# Update web_accessible_resources in manifest.json if needed.
