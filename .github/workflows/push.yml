@@ -19,15 +19,13 @@ jobs:
         run: npm install -g pnpm
 
       - name: Install dependencies
-        run: pnpm install # This will now also install puppeteer and assert
+        run: pnpm install
+
+      - name: Install chrome
+        run: npx puppeteer browsers install chrome
 
       - name: Build project
         run: pnpm build
-
-      - name: Setup Chrome
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable # Or specify a particular version
 
       - name: Run E2E tests (Installability & Functional)
         run: pnpm test:e2e
