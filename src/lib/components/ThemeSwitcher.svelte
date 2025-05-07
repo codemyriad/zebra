@@ -39,12 +39,7 @@
 <div class="flex items-center justify-between">
   <label class="swap swap-rotate">
     <!-- this hidden checkbox controls the state -->
-    <input
-      type="checkbox"
-      onchange={toggleTheme}
-      value="dim"
-      class="theme-controller"
-    />
+    <input type="checkbox" onchange={toggleTheme} class="theme-controller" />
 
     <!-- sun icon -->
     <svg
