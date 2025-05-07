@@ -38,31 +38,18 @@
     }
 </script>
 
-<main>
-    <h1>Zebra LLM Cache</h1>
-    <p>Welcome to your Zebra extension popup!</p>
+<main class="p-4 max-w-md mx-auto bg-base-100 text-center">
+    <h1 class="text-2xl font-bold mb-4 text-primary">Zebra LLM Cache</h1>
+    <p class="mb-4">Welcome to your Zebra extension popup!</p>
     {#if messageFromBackground}
-        <p>Message from background: <strong>{messageFromBackground}</strong></p>
+        <div class="alert alert-info mb-4">
+            <span>Message from background: <strong>{messageFromBackground}</strong></span>
+        </div>
     {/if}
-    <p><em>Check the console for more logs.</em></p>
+    <p class="text-sm italic mb-4">Check the console for more logs.</p>
 
     <!-- Add a button to open the options page -->
-    <button on:click={openOptionsPage} style="margin-top: 1em;">
+    <button on:click={openOptionsPage} class="btn btn-primary">
         Open Options Page
     </button>
 </main>
-
-<style>
-    main {
-        font-family: sans-serif;
-        text-align: center;
-        padding: 1em;
-        max-width: 240px;
-    }
-    h1 {
-        color: #333;
-        text-transform: uppercase;
-        font-size: 1.5em;
-        font-weight: 200;
-    }
-</style>

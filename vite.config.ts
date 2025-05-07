@@ -1,5 +1,4 @@
-import { defineConfig }
-from 'vite';
+import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { resolve } from 'path';
 
@@ -15,6 +14,7 @@ export default defineConfig({
         content_chatgpt: resolve(__dirname, 'src/content/chatgpt.ts'),
         content_claude: resolve(__dirname, 'src/content/claude.ts'),
         options: resolve(__dirname, 'src/options/options.html'),
+        app: resolve(__dirname, 'src/app.css'),
       },
       output: {
         entryFileNames: `assets/[name].js`,

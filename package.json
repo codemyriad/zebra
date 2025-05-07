@@ -15,9 +15,13 @@
     "@tsconfig/svelte": "^5.0.4",
     "@types/chrome": "^0.0.268",
     "assert": "^2.1.0",
+    "autoprefixer": "^10.4.16",
+    "daisyui": "^4.7.2",
+    "postcss": "^8.4.32",
     "puppeteer": "^22.7.1",
     "svelte": "^5.28.2",
     "svelte-check": "^4.1.7",
+    "tailwindcss": "^3.4.0",
     "tslib": "^2.6.2",
     "typescript": "^5.4.5",
     "vite": "^6.3.5"
