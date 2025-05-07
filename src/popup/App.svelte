@@ -1,91 +1,102 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import markdownit from "markdown-it";
+  import { onMount } from "svelte";
+  import ThemeSwitcher from "../lib/components/ThemeSwitcher.svelte";
 
-	let messageFromBackground = "";
-	let isDownloading = false;
-	let errorStatus = "";
+  let messageFromBackground = $state("");
+  let searchQuery = $state("");
 
-	onMount(async () => {
-		console.log("Zebra Popup App Mounted.");
-		try {
-			const response = await chrome.runtime.sendMessage({
-				greeting: "hello from popup"
-			});
-			console.log("Response from background in popup:", response);
-			if (response && response.farewell) {
-				messageFromBackground = response.farewell;
-			} else {
-				messageFromBackground = "No response or unexpected response format.";
-			}
-		} catch (error) {
-			console.error("Error sending message from popup:", error);
-			messageFromBackground = `Error: ${error.message}`;
-			if (chrome.runtime.lastError) {
-				console.error("Chrome runtime error:", chrome.runtime.lastError.message);
-				messageFromBackground += ` | Chrome Error: ${chrome.runtime.lastError.message}`;
-			}
-		}
-	});
+  onMount(async () => {
+    console.log("Zebra Popup App Mounted.");
+    try {
+      const response = await chrome.runtime.sendMessage({
+        greeting: "hello from popup",
+      });
+      console.log("Response from background in popup:", response);
+      if (response && response.farewell) {
+        messageFromBackground = response.farewell;
+      } else {
+        messageFromBackground = "No response or unexpected response format.";
+      }
+    } catch (error) {
+      console.error("Error sending message from popup:", error);
+      messageFromBackground = `Error: ${error.message}`;
+      if (chrome.runtime.lastError) {
+        console.error(
+          "Chrome runtime error:",
+          chrome.runtime.lastError.message
+        );
+        messageFromBackground += ` | Chrome Error: ${chrome.runtime.lastError.message}`;
+      }
+    }
+  });
 
-	function openOptionsPage() {
-		// This will open options.html in a new tab.
-		// Ensure options.html is included in your Vite build and manifest.
-		chrome.tabs.create({
-			url: chrome.runtime.getURL("src/options/options.html")
-		});
-	}
+  function openOptionsPage(query = "") {
+    // This will open options.html in a new tab with optional search query
+    const url = chrome.runtime.getURL("src/options/options.html");
+    const fullUrl = query ? `${url}?search=${encodeURIComponent(query)}` : url;
+    chrome.tabs.create({ url: fullUrl });
+  }
 
-	async function downloadConversationHistory() {
-		chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-			const [tab] = tabs;
-			isDownloading = true;
-			errorStatus = "";
-			try {
-				await chrome.tabs.sendMessage(tab.id!, { action: "download_conversation_history" });
-			} catch (error: any) {
-				errorStatus = `Error downloading: ${error.message}`;
-			} finally {
-				isDownloading = false;
-			}
-		});
-	}
+  function handleSearch() {
+    if (searchQuery.trim()) {
+      openOptionsPage(searchQuery);
+    }
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === "Enter") {
+      handleSearch();
+    }
+  }
 </script>
 
-<main>
-	<h1>Zebra LLM Cache</h1>
-	<p>Welcome to your Zebra extension popup!</p>
-	{#if messageFromBackground}
-		<p>Message from background: <strong>{messageFromBackground}</strong></p>
-	{/if}
-	{@html markdownit().render("# Marked in Node.js\n\nRendered by **marked**.")}
+<main class="p-4 max-w-md mx-auto bg-base-100">
+  <div class="flex items-center mb-6">
+    <div class="w-16 h-16 mr-4">
+      <img src="/assets/logo.svg" alt="Zebra Logo" class="w-full h-full" />
+    </div>
+    <div class="flex-1">
+      <h1 class="text-2xl font-bold text-primary">Zebra LLM Cache</h1>
+    </div>
+  </div>
 
-	<p><em>Check the console for more logs.</em></p>
+  <div class="mb-6">
+    <div class="join w-full">
+      <input
+        type="text"
+        placeholder="Search convo's"
+        class="input input-bordered join-item flex-1"
+        bind:value={searchQuery}
+        onkeydown={handleKeyDown}
+      />
+      <button class="btn join-item btn-primary" onclick={handleSearch}>
+        Enter
+      </button>
+    </div>
+  </div>
 
-	<!-- Add a button to open the options page -->
-	<button on:click={openOptionsPage} style="margin-top: 1em;"> Open Options Page </button>
+  <div class="divider">Or</div>
 
-	<!-- Add a button to download conversation history -->
-	<button on:click={downloadConversationHistory} style="margin-top: 1em; display: block; width: 100%;" disabled={isDownloading}>
-		{isDownloading ? "Downloading..." : "Download Conversation History"}
-	</button>
+  <button
+    class="btn btn-outline btn-primary w-full"
+    onclick={() => openOptionsPage()}
+  >
+    View all
+  </button>
 
-	{#if errorStatus}
-		<p style="margin-top: 0.5em; font-size: 0.9em;">{errorStatus}</p>
-	{/if}
+  <!-- Spacer to push footer to bottom -->
+  <div class="flex-grow"></div>
+
+  <!-- Footer with theme switcher -->
+  <div
+    class="flex flex-row justify-between items-center mt-4 pt-4 border-t border-base-300"
+  >
+    <ThemeSwitcher />
+
+    {#if messageFromBackground}
+      <div class="text-xs text-opacity-60">
+        <span>Debug: {messageFromBackground}</span>
+      </div>
+    {/if}
+  </div>
 </main>
-
-<style>
-	main {
-		font-family: sans-serif;
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-	}
-	h1 {
-		color: #333;
-		text-transform: uppercase;
-		font-size: 1.5em;
-		font-weight: 200;
-	}
-</style>
