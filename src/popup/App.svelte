@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-
+    import markdownit from "markdown-it";
     let messageFromBackground = "";
 
     onMount(async () => {
@@ -44,6 +44,11 @@
     {#if messageFromBackground}
         <p>Message from background: <strong>{messageFromBackground}</strong></p>
     {/if}
+    {@html markdownit().render(
+        "# Marked in Node.js\n\nRendered by **marked**.",
+    )}
+
+    <p><em>Check the console for more logs.</em></p>
     <p><em>Check the console for more logs.</em></p>
 
     <!-- Add a button to open the options page -->
