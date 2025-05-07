@@ -3,14 +3,19 @@
 
   // Available themes from DaisyUI
   const themes = ['light', 'dark', 'cupcake'];
-  let currentTheme: string;
+  let currentTheme: string = 'light'; // Initialize with a default value
 
-  onMount(async () => {
+  onMount(() => {
     // Try to get saved theme from storage
     try {
-      const result = await chrome.storage.sync.get('theme');
-      currentTheme = result.theme || 'light';
-      applyTheme(currentTheme);
+      chrome.storage.sync.get('theme').then(result => {
+        currentTheme = result.theme || 'light';
+        applyTheme(currentTheme);
+      }).catch(error => {
+        console.error('Error loading theme:', error);
+        currentTheme = 'light';
+        applyTheme(currentTheme);
+      });
     } catch (error) {
       console.error('Error loading theme:', error);
       currentTheme = 'light';
@@ -22,13 +27,15 @@
     document.documentElement.setAttribute('data-theme', theme);
   }
 
-  async function changeTheme(theme: string) {
+  function changeTheme(theme: string) {
     currentTheme = theme;
     applyTheme(theme);
     
     // Save theme preference
     try {
-      await chrome.storage.sync.set({ theme });
+      chrome.storage.sync.set({ theme }).catch(error => {
+        console.error('Error saving theme:', error);
+      });
     } catch (error) {
       console.error('Error saving theme:', error);
     }

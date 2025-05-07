@@ -1,8 +1,11 @@
-// import '../app.css';
+import '../app.css';
 import App from "./App.svelte";
 
-const app = new App({
-  target: document.getElementById("app"),
-});
+// In Svelte 5, we need to create the component differently
+const target = document.getElementById("app");
 
-export default app;
+if (target) {
+  new App({
+    target
+  });
+}
