@@ -31,9 +31,14 @@
             jsonData = JSON.parse(await selectedFile!.text());
 
             console.log("File content:", jsonData);
-            conv = convertClaudeToDesiredFormat(
-                jsonData as ClaudeConversation[],
-            );
+            conv =
+                selectedProvider === "claude"
+                    ? convertClaudeToDesiredFormat(
+                          jsonData as ClaudeConversation[],
+                      )
+                    : convertChatGPTToDesiredFormat(
+                          jsonData as ChatGPTConversation[],
+                      );
 
             console.log("Converted File content:", conv);
 
@@ -131,6 +136,121 @@
         });
     }
 
+    interface ChatGPTMessage {
+        id: string;
+        author: {
+            role: "user" | "assistant" | "system";
+        };
+        create_time: number;
+        content: {
+            content_type: string;
+            parts?: string[];
+            text?: string;
+            thoughts?: Array<{
+                content: string;
+            }>;
+        };
+        metadata?: {
+            model_slug?: string;
+        };
+    }
+
+    interface ChatGPTConversation {
+        title: string;
+        create_time: number;
+        update_time: number;
+        mapping: {
+            [key: string]: {
+                message: ChatGPTMessage;
+                parent: string | null;
+                children: string[];
+            };
+        };
+        current_node: string;
+    }
+
+    function convertChatGPTToDesiredFormat(
+        chatGPTData: ChatGPTConversation[],
+    ): Conversation[] {
+        return chatGPTData.map((conversation) => {
+            // Extract basic conversation metadata
+            const result: Conversation = {
+                id:
+                    conversation.current_node ||
+                    Object.keys(conversation.mapping)[0],
+                title: conversation.title || "Untitled Conversation",
+                created_at: conversation.create_time * 1000, // Convert to milliseconds
+                updated_at: conversation.update_time * 1000,
+                source: "ChatGPT",
+                messages: [],
+            };
+
+            // Build message chain by following parent->child relationships
+            const messages: Message[] = [];
+            const visitedNodes = new Set<string>();
+
+            // Helper function to traverse the message tree
+            const traverseMessages = (nodeId: string) => {
+                if (visitedNodes.has(nodeId) || !conversation.mapping[nodeId])
+                    return;
+
+                visitedNodes.add(nodeId);
+                const node = conversation.mapping[nodeId];
+
+                if (node.message) {
+                    // Determine message content
+                    let content = "";
+                    const msgContent = node.message.content;
+
+                    if (msgContent.parts && Array.isArray(msgContent.parts)) {
+                        content = msgContent.parts.join("\n");
+                    } else if (msgContent.text) {
+                        content = msgContent.text;
+                    } else if (
+                        msgContent.thoughts &&
+                        Array.isArray(msgContent.thoughts)
+                    ) {
+                        content = msgContent.thoughts
+                            .map((t) => t.content)
+                            .join("\n");
+                    }
+
+                    if (content) {
+                        messages.push({
+                            created_at: node.message.create_time * 1000,
+                            author:
+                                node.message.author.role === "user"
+                                    ? "user"
+                                    : "assistant",
+                            content: content,
+                            // model: node.message.metadata?.model_slug,
+                        });
+                    }
+                }
+
+                // Process children
+                node.children.forEach((childId) => traverseMessages(childId));
+            };
+
+            // Find root nodes (nodes with no parent or parent not in mapping)
+            const rootNodes = Object.entries(conversation.mapping)
+                .filter(
+                    ([id, node]) =>
+                        !node.parent || !conversation.mapping[node.parent],
+                )
+                .map(([id]) => id);
+
+            // Traverse from all root nodes
+            rootNodes.forEach((rootId) => traverseMessages(rootId));
+
+            // Sort messages by timestamp (since tree traversal might not maintain order)
+            result.messages = messages.sort(
+                (a, b) => a.created_at - b.created_at,
+            );
+
+            return result;
+        });
+    }
     /**
      * Process a single Claude conversation
      * @param conversation - Single Claude conversation object
