@@ -3,25 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Options Page</title>
+  <title>Zebra LLM Cache - Conversations</title>
   <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
   <div class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-4">Extension Options</h1>
-    <p class="mb-4">This is the options page for the Zebra LLM Conversation Cache.</p>
+    <header class="flex items-center justify-between mb-8">
+      <div class="flex items-center">
+        <img src="/logo.svg" alt="Zebra Logo" class="w-12 h-12 mr-4" />
+        <h1 class="text-3xl font-bold text-primary">Zebra LLM Conversation Cache</h1>
+      </div>
+      <div class="theme-selector">
+        <!-- Theme selector will be added here with JavaScript -->
+      </div>
+    </header>
     
-    <div class="card bg-base-200 shadow-xl p-6 max-w-md">
-      <h2 class="text-xl font-semibold mb-2">Settings</h2>
-      <p>Configure your extension settings here.</p>
-      
-      <div class="form-control mt-4">
-        <label class="label cursor-pointer">
-          <span class="label-text">Enable dark mode</span>
-          <input type="checkbox" class="toggle toggle-primary" />
-        </label>
+    <div class="search-container mb-6">
+      <div class="join w-full max-w-md mx-auto">
+        <input type="text" id="search-input" placeholder="Search conversations..." class="input input-bordered join-item flex-1" />
+        <button id="search-button" class="btn join-item btn-primary">Search</button>
+      </div>
+    </div>
+    
+    <div class="card bg-base-200 shadow-xl p-6">
+      <h2 class="text-xl font-semibold mb-4">Your Conversations</h2>
+      <div id="conversations-list" class="space-y-4">
+        <!-- Conversations will be loaded here -->
+        <div class="text-center py-8 text-base-content/60">
+          <p>No conversations found. Start chatting with an LLM to see your history here.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-8">
+      <h2 class="text-xl font-semibold mb-4">Settings</h2>
+      <div class="card bg-base-200 shadow-xl p-6">
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text">Enable automatic caching</span>
+            <input type="checkbox" class="toggle toggle-primary" checked />
+          </label>
+        </div>
+        <div class="form-control mt-4">
+          <label class="label cursor-pointer">
+            <span class="label-text">Cache images in conversations</span>
+            <input type="checkbox" class="toggle toggle-primary" />
+          </label>
+        </div>
+        <div class="form-control mt-4">
+          <label class="label">
+            <span class="label-text">Storage limit</span>
+          </label>
+          <select class="select select-bordered w-full max-w-xs">
+            <option>100 MB (Default)</option>
+            <option>250 MB</option>
+            <option>500 MB</option>
+            <option>1 GB</option>
+          </select>
+        </div>
       </div>
     </div>
   </div>
+
+  <script>
+    // Get search query from URL if present
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchQuery = urlParams.get('search');
+      
+      if (searchQuery) {
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+          searchInput.value = searchQuery;
+          // Trigger search
+          console.log(`Searching for: ${searchQuery}`);
+          // TODO: Implement actual search functionality
+        }
+      }
+
+      // Load theme from storage
+      chrome.storage.sync.get('theme', (result) => {
+        const theme = result.theme || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+      });
+    });
+  </script>
 </body>
 </html>
