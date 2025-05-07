@@ -1,3 +1,5 @@
+import { getConversationHistory } from "../lib/chatgpt"
+
 console.log("Zebra Content Script loaded for ChatGPT.");
 
 // Example: Send a message to the background script
@@ -9,5 +11,13 @@ chrome.runtime.sendMessage({ greeting: "hello from chatgpt content script" }, (r
   }
 });
 
-// TODO: Add logic to interact with ChatGPT's DOM
-// e.g., identify conversation elements, cache them, etc.
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "download_conversation_history") {
+    getConversationHistory().then((res) => {
+      sendResponse({ status: "success", data: res });
+    }).catch((error) => {
+      sendResponse({ status: "error", error: error.message });
+    });
+    return true; // Indicate that the response will be sent asynchronously
+  }
+})
