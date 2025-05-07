@@ -57,9 +57,6 @@
     </div>
     <div class="flex-1">
       <h1 class="text-2xl font-bold text-primary">Zebra LLM Cache</h1>
-      <div class="flex justify-end">
-        <ThemeSwitcher />
-      </div>
     </div>
   </div>
 
@@ -70,9 +67,9 @@
         placeholder="Search convo's"
         class="input input-bordered join-item flex-1"
         bind:value={searchQuery}
-        on:keydown={handleKeyDown}
+        onkeydown={handleKeyDown}
       />
-      <button class="btn join-item btn-primary" on:click={handleSearch}>
+      <button class="btn join-item btn-primary" onclick={handleSearch}>
         Enter
       </button>
     </div>
@@ -82,14 +79,24 @@
 
   <button
     class="btn btn-outline btn-primary w-full"
-    on:click={() => openOptionsPage()}
+    onclick={() => openOptionsPage()}
   >
     View all
   </button>
 
-  {#if messageFromBackground}
-    <div class="mt-4 text-xs text-opacity-60">
-      <span>Debug: {messageFromBackground}</span>
-    </div>
-  {/if}
+  <!-- Spacer to push footer to bottom -->
+  <div class="flex-grow"></div>
+
+  <!-- Footer with theme switcher -->
+  <div
+    class="flex flex-row justify-between items-center mt-4 pt-4 border-t border-base-300"
+  >
+    <ThemeSwitcher />
+
+    {#if messageFromBackground}
+      <div class="text-xs text-opacity-60">
+        <span>Debug: {messageFromBackground}</span>
+      </div>
+    {/if}
+  </div>
 </main>
