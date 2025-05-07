@@ -17,6 +17,7 @@
     "assert": "^2.1.0",
     "autoprefixer": "^10.4.16",
     "daisyui": "^4.7.2",
+    "lucide-svelte": "^0.508.0",
     "postcss": "^8.4.32",
     "puppeteer": "^22.7.1",
     "svelte": "^5.28.2",
