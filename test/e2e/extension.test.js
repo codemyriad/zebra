@@ -13,21 +13,30 @@ const extensionPath = path.resolve(__dirname, '..', '..', 'dist');
 const extensionManifestPath = path.resolve(extensionPath, 'manifest.json'); // For getting extension ID
 
 async function getExtensionId(browser) {
-    // A common way to get an extension's ID is to open its manifest.json
-    // or any known page from the extension and parse the URL.
-    // However, a more robust way is to find a target belonging to the extension.
-    const targets = browser.targets();
-    for (const target of targets) {
-        if (target.url().startsWith('chrome-extension://')) {
-            const url = target.url();
-            // URL is like chrome-extension://<id>/_generated_background_page.html
-            const extensionId = new URL(url).hostname;
-            if (extensionId) {
-                return extensionId;
-            }
-        }
+    console.log("Attempting to find an extension target to determine ID...");
+    // Wait for the service worker target of the extension to appear.
+    // This is more reliable as it waits for the extension to initialize.
+    const extensionTarget = await browser.waitForTarget(
+        (target) => target.type() === 'service_worker' && target.url().startsWith('chrome-extension://'),
+        { timeout: 10000 } // Wait up to 10 seconds
+    );
+
+    if (!extensionTarget) {
+        // If still not found, try to list all targets for debugging
+        const allTargets = await browser.targets();
+        console.error("All available targets:", allTargets.map(t => ({ type: t.type(), url: t.url() })));
+        throw new Error('Could not find the service worker target for the extension within the timeout.');
     }
-    throw new Error('Could not determine extension ID.');
+
+    const targetUrl = extensionTarget.url();
+    console.log(`Found extension target (service worker) with URL: ${targetUrl}`);
+    // The URL will be something like: chrome-extension://<extension_id>/service_worker_script_name.js
+    const extensionId = new URL(targetUrl).hostname;
+
+    if (!extensionId) {
+        throw new Error(`Could not parse extension ID from URL: ${targetUrl}`);
+    }
+    return extensionId;
 }
 
 async function runTests() {
