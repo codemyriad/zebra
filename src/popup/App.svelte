@@ -2,8 +2,8 @@
   import { onMount } from "svelte";
   import ThemeSwitcher from "./components/ThemeSwitcher.svelte";
 
-  const messageFromBackground = $state("");
-  const searchQuery = $state("");
+  let messageFromBackground = $state("");
+  let searchQuery = $state("");
 
   onMount(async () => {
     console.log("Zebra Popup App Mounted.");

@@ -2,8 +2,8 @@
   import { onMount } from "svelte";
 
   // Available themes from DaisyUI
-  const themes = ["light", "dark", "cupcake"];
-  const currentTheme = $state("light");
+  let themes = ["light", "dark", "cupcake"];
+  let currentTheme = $state("light");
 
   onMount(async () => {
     // Try to get saved theme from storage
