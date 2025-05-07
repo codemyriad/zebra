@@ -1,5 +1,4 @@
-import { defineConfig }
-from 'vite';
+import { defineConfig } from 'vite';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { resolve } from 'path';
 
@@ -31,4 +30,9 @@ export default defineConfig({
   },
   // Ensure static assets in public/ are copied
   publicDir: 'public',
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
 });
