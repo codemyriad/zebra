@@ -28,6 +28,14 @@
             }
         }
     });
+
+    function openOptionsPage() {
+        // This will open options.html in a new tab.
+        // Ensure options.html is included in your Vite build and manifest.
+        chrome.tabs.create({
+            url: chrome.runtime.getURL("src/options/options.html"),
+        });
+    }
 </script>
 
 <main>
@@ -39,6 +47,12 @@
     {markdownit().render("# Marked in Node.js\n\nRendered by **marked**.")}
 
     <p><em>Check the console for more logs.</em></p>
+    <p><em>Check the console for more logs.</em></p>
+
+    <!-- Add a button to open the options page -->
+    <button on:click={openOptionsPage} style="margin-top: 1em;">
+        Open Options Page
+    </button>
 </main>
 
 <style>
