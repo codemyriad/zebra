@@ -1,11 +1,15 @@
 import { defineConfig }
 from 'vite';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [svelte()],
+  plugins: [
+    svelte({
+      preprocess: vitePreprocess()
+    })
+  ],
   build: {
     outDir: 'dist',
     rollupOptions: {
@@ -15,6 +19,7 @@ export default defineConfig({
         content_chatgpt: resolve(__dirname, 'src/content/chatgpt.ts'),
         content_claude: resolve(__dirname, 'src/content/claude.ts'),
         options: resolve(__dirname, 'src/options/options.html'),
+        import: resolve(__dirname, 'src/options/import.html'),
       },
       output: {
         entryFileNames: `assets/[name].js`,
