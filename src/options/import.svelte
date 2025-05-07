@@ -1,10 +1,11 @@
 <script lang="ts">
+    import type { Conversation, Message } from "../lib/types/content";
     let selectedFile: File | null = null;
     let jsonData: object;
     let selectedProvider: string = "chatgpt";
     let fileWarning: string = "";
     let providerWarning: string = "";
-
+    let conv: Conversation[] = [];
     async function processForm(e: Event) {
         e.preventDefault();
         fileWarning = ""; // Clear previous warnings
@@ -28,13 +29,130 @@
 
         try {
             jsonData = JSON.parse(await selectedFile!.text());
+
             console.log("File content:", jsonData);
+            conv = convertClaudeToDesiredFormat(
+                jsonData as ClaudeConversation[],
+            );
+
+            console.log("Converted File content:", conv);
+
             // Further processing of jsonData can happen here
         } catch (error) {
             console.error("Error reading file:", error);
             fileWarning = "Failed to read the file.";
         }
     }
+
+    // Define types for the Claude API response format
+    interface ClaudeContentBlock {
+        start_timestamp?: string;
+        stop_timestamp?: string;
+        type: string;
+        text?: string;
+        citations?: any[];
+    }
+
+    interface ClaudeChatMessage {
+        uuid: string;
+        text?: string;
+        content?: ClaudeContentBlock[];
+        sender: "human" | "assistant";
+        created_at: string;
+        updated_at: string;
+        attachments?: any[];
+        files?: any[];
+    }
+
+    interface ClaudeConversation {
+        uuid: string;
+        name: string;
+        created_at: string;
+        updated_at: string;
+        account?: {
+            uuid: string;
+        };
+        chat_messages: ClaudeChatMessage[];
+    }
+
+    /**
+     * Converts Claude API conversation data to the desired output format
+     * @param claudeData - Array of Claude conversation objects
+     * @returns Array of conversations in the desired format
+     */
+    function convertClaudeToDesiredFormat(
+        claudeData: ClaudeConversation[],
+    ): Conversation[] {
+        return claudeData.map((conversation) => {
+            // Extract basic conversation metadata
+            const result: Conversation = {
+                id: conversation.uuid,
+                title: conversation.name || "Untitled Conversation",
+                created_at: new Date(conversation.created_at).getTime(),
+                updated_at: new Date(conversation.updated_at).getTime(),
+                source: "Claude",
+                messages: [],
+            };
+
+            // Process messages
+            if (
+                conversation.chat_messages &&
+                Array.isArray(conversation.chat_messages)
+            ) {
+                result.messages = conversation.chat_messages.map((msg) => {
+                    // Determine message content
+                    let content = "";
+
+                    // Handle different content structures
+                    if (msg.text) {
+                        // Direct text field
+                        content = msg.text;
+                    } else if (msg.content && Array.isArray(msg.content)) {
+                        // Content array with text blocks
+                        content = msg.content
+                            .filter(
+                                (block) => block.type === "text" && block.text,
+                            )
+                            .map((block) => block.text)
+                            .join("\n");
+                    }
+
+                    const message: Message = {
+                        created_at: new Date(msg.created_at).getTime(),
+                        author: msg.sender === "human" ? "user" : "assistant",
+                        content: content,
+                    };
+
+                    return message;
+                });
+            }
+
+            return result;
+        });
+    }
+
+    /**
+     * Process a single Claude conversation
+     * @param conversation - Single Claude conversation object
+     * @returns Conversation in the desired format
+     */
+    function processSingleConversation(
+        conversation: ClaudeConversation,
+    ): Conversation {
+        return convertClaudeToDesiredFormat([conversation])[0];
+    }
+
+    /**
+
+    // For an array of conversations
+    const convertedData: Conversation[] = convertClaudeToDesiredFormat(claudeApiData);
+
+    // For a single conversation
+    const singleConversation: Conversation = processSingleConversation(claudeApiData[0]);
+
+    // To save as JSON
+    const jsonOutput: string = JSON.stringify(convertedData, null, 2);
+    */
 
     function handleFileChange(e: Event) {
         const target = e.target as HTMLInputElement;
@@ -99,6 +217,22 @@
                 {/if}
             </div>
         </fieldset>
+
+        {#each conv as convo}
+            <div class="messages">
+                <div>Created At: {convo.created_at}</div>
+                <div>Id: {convo.id}</div>
+                <div>Messages:</div>
+                {#each convo.messages as msg}
+                    <p>{msg.author}</p>
+                    <p>{msg.content}</p>
+                    <p>{msg.created_at}</p>
+                {/each}
+                <div>Source: {convo.source}</div>
+                <div>Title: {convo.title}</div>
+                <div>Updated At: {convo.updated_at}</div>
+            </div>
+        {/each}
 
         <button type="submit">Import</button>
     </form>
@@ -186,5 +320,9 @@
         color: red;
         font-size: 0.9em;
         margin-top: 0.5em;
+    }
+    .messages {
+        border-top: solid;
+        border-bottom: solid;
     }
 </style>
