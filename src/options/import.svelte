@@ -220,17 +220,21 @@
 
         {#each conv as convo}
             <div class="messages">
-                <div>Created At: {convo.created_at}</div>
+                <div>
+                    Created At: {new Date(convo.created_at).toISOString()}
+                </div>
                 <div>Id: {convo.id}</div>
-                <div>Messages:</div>
-                {#each convo.messages as msg}
-                    <p>{msg.author}</p>
-                    <p>{msg.content}</p>
-                    <p>{msg.created_at}</p>
-                {/each}
                 <div>Source: {convo.source}</div>
                 <div>Title: {convo.title}</div>
-                <div>Updated At: {convo.updated_at}</div>
+                <div>
+                    Updated At: {new Date(convo.updated_at).toISOString()}
+                </div>
+                <div>Messages:</div>
+                {#each convo.messages as msg}
+                    <p>Author: {msg.author}</p>
+                    <p>Content: {msg.content}</p>
+                    <p>Created At: {new Date(msg.created_at).toDateString()}</p>
+                {/each}
             </div>
         {/each}
 
