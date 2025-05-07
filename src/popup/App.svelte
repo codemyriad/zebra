@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import ThemeSwitcher from "./components/ThemeSwitcher.svelte";
+  import ThemeSwitcher from "../lib/components/ThemeSwitcher.svelte";
 
   let messageFromBackground = $state("");
   let searchQuery = $state("");
