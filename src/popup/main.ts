@@ -1,11 +1,7 @@
-import '../app.css';
+import { mount } from "svelte";
+
 import App from "./App.svelte";
+import "../app.css";
 
-// In Svelte 5, we need to create the component differently
-const target = document.getElementById("app");
-
-if (target) {
-  new App({
-    target
-  });
-}
+// @ts-ignore
+mount(App, { target: document.getElementById("app") });
