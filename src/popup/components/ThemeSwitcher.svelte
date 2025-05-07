@@ -3,7 +3,7 @@
 
   // Available themes from DaisyUI
   const themes = ["light", "dark", "cupcake"];
-  let currentTheme: string;
+  const currentTheme = $state("light");
 
   onMount(async () => {
     // Try to get saved theme from storage
