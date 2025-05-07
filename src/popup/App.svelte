@@ -44,7 +44,9 @@
     {#if messageFromBackground}
         <p>Message from background: <strong>{messageFromBackground}</strong></p>
     {/if}
-    {markdownit().render("# Marked in Node.js\n\nRendered by **marked**.")}
+    {@html markdownit().render(
+        "# Marked in Node.js\n\nRendered by **marked**.",
+    )}
 
     <p><em>Check the console for more logs.</em></p>
     <p><em>Check the console for more logs.</em></p>
