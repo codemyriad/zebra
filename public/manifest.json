@@ -3,7 +3,7 @@
   "name": "Zebra LLM Conversation Cache",
   "version": "0.1.0",
   "description": "Caches conversations with LLMs (ChatGPT, Claude) and stores them locally using SQLite WASM.",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab", "scripting", "unlimitedStorage"],
   "host_permissions": ["https://chatgpt.com/*", "https://claude.ai/*"],
   "background": {
     "service_worker": "assets/background.js",
@@ -48,5 +48,14 @@
       ],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "cross_origin_embedder_policy": {
+    "value": "require-corp"
+  },
+  "cross_origin_opener_policy": {
+    "value": "same-origin"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
 }

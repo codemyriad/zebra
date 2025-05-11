@@ -29,6 +29,5 @@ export default defineConfig({
     },
     emptyOutDir: true, // Important for Chrome extensions to clear out old files
   },
-  // Ensure static assets in public/ are copied
   publicDir: "public",
 });
