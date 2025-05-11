@@ -1,7 +1,5 @@
-import Options from './options.svelte';
+import { mount } from "svelte";
+import App from "./App.svelte";
 
-const app = new Options({
-  target: document.getElementById('app'),
-});
-
-export default app;
+// @ts-ignore
+mount(App, { target: document.getElementById("app") });
