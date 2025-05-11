@@ -4,7 +4,7 @@ This document describes the SQLite WASM integration in the Zebra LLM Conversatio
 
 ## Overview
 
-The extension uses SQLite WASM with Origin-Private FileSystem (OPFS) support to store conversation data persistently. The implementation handles both service worker and regular contexts, providing a unified API for database operations.
+The extension attempts to use SQLite WASM with Origin-Private FileSystem (OPFS) support to store conversation data persistently. However, OPFS availability can vary depending on the browser and environment. The implementation handles both service worker and regular contexts, providing a unified API for database operations. If OPFS is not available, the database might operate in a less persistent mode (e.g., in-memory or IndexedDB-backed, depending on the SQLite WASM build and configuration).
 
 ## Database Schema
 
@@ -158,4 +158,6 @@ The results will be displayed in the console.
 
 ## Storage Location
 
-The database is stored in the Origin-Private FileSystem (OPFS), which is a persistent storage area specific to your extension's origin. The database file is named "conversations.db" and is not directly accessible through the file system - it can only be accessed through the SQLite API in your extension code.
+Ideally, the database is stored in the Origin-Private FileSystem (OPFS), which is a persistent storage area specific to your extension's origin. When OPFS is used, the database file is named "conversations.db" and is not directly accessible through the file system—it can only be accessed through the SQLite API in your extension code.
+
+If OPFS is not available or fails to initialize, SQLite WASM may fall back to other storage mechanisms (like IndexedDB or an in-memory database), which might have different persistence characteristics. The exact fallback behavior depends on the SQLite WASM library's configuration and the browser's capabilities.
