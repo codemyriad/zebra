@@ -120,6 +120,7 @@
             {/if}
         </div>
 
+        <ImportForm />
         <div class="justify-self-end self-end">
             <ThemeSwitcher />
         </div>
