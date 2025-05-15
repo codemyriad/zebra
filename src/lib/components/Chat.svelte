@@ -15,32 +15,47 @@
 <div>
     <div class="messages">
         {#if selectedConversation}
-            <div>Id: {selectedConversation.id}</div>
-            <div>Source: {selectedConversation.source}</div>
-            <div>Title: {selectedConversation.title}</div>
+            <!-- Conversation Details Header -->
+            <div class="mb-6 p-4 bg-base-200 rounded-box shadow">
+                <h3
+                    class="text-base font-semibold
+text-primary"
+                >
+                    {selectedConversation.title}
+                </h3>
+                <div class="text-sm opacity-70 mt-1">
+                    <span>ID: {selectedConversation.id}</span> |
+                    <span
+                        >Source: <span
+                            class="badge badge-sm
+badge-outline">{selectedConversation.source}</span
+                        ></span
+                    >
+                    |
+                    <span
+                        >Last updated: {new Date(
+                            selectedConversation.updated_at,
+                        ).toLocaleString()}</span
+                    >
+                </div>
+            </div>
 
             {#each selectedConversation.messages as msg}
-                <!-- <p>Author: {msg.author}</p>
-                <p>Content: {msg.content}</p> -->
                 {#if msg.author === "assistant"}
                     <div class="chat chat-start">
                         <div class="chat-header">
                             {msg.author}
-
-                            <time class="text-xs opacity-50">
-                                Created At: {new Date(
-                                    selectedConversation.created_at,
-                                ).toISOString()}
+                            <time class="text-xs opacity-50 ml-1">
+                                {new Date(msg.created_at).toLocaleString()}
                             </time>
                         </div>
-                        <div class="chat-bubble w-full">
+                        <div
+                            class="chat-bubble chat-bubble-primary w-full
+text-base"
+                        >
                             {@html md.render(msg.content)}
                         </div>
-                        <div class="chat-footer opacity-50">
-                            Updated At: {new Date(
-                                selectedConversation.updated_at,
-                            ).toISOString()}
-                        </div>
+                        <div class="chat-footer opacity-50"></div>
                     </div>
                 {/if}
 
@@ -48,30 +63,17 @@
                     <div class="chat chat-end">
                         <div class="chat-header">
                             {msg.author}
-
-                            <time class="text-xs opacity-50">
-                                Created At: {new Date(
-                                    selectedConversation.created_at,
-                                ).toISOString()}
+                            <time class="text-xs opacity-50 ml-1">
+                                {new Date(msg.created_at).toLocaleString()}
                             </time>
                         </div>
-                        <div class="chat-bubble w-full">
+                        <div class="chat-bubble w-full text-base">
                             {@html md.render(msg.content)}
                         </div>
-                        <div class="chat-footer opacity-50">
-                            Updated At: {new Date(
-                                selectedConversation.updated_at,
-                            ).toISOString()}
-                        </div>
+                        <div class="chat-footer opacity-50"></div>
                     </div>
                 {/if}
             {/each}
         {/if}
     </div>
 </div>
-
-<style>
-    code {
-        text-wrap: pretty;
-    }
-</style>

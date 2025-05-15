@@ -37,7 +37,7 @@
     }
 </script>
 
-<div class="drawer-side z-10">
+<div class="drawer-side h-full z-10">
     <label
         for="options-drawer"
         aria-label="close sidebar"

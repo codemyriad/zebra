@@ -59,21 +59,10 @@
             await addNewConversationsAndRefresh(convertedConvs);
         } catch (error) {
             console.error("Error reading file:", error);
-            fileWarning = "Failed to read the file.";
+            fileWarning =
+                "Failed to read the file. Ensure it is a valid JSON  format.";
         }
     }
-
-    /**
-
-    // For an array of conversations
-    const convertedData: Conversation[] = convertClaudeToDesiredFormat(claudeApiData);
-
-    // For a single conversation
-    const singleConversation: Conversation = processSingleConversation(claudeApiData[0]);
-
-    // To save as JSON
-    const jsonOutput: string = JSON.stringify(convertedData, null, 2);
-    */
 
     function handleFileChange(e: Event) {
         const target = e.target as HTMLInputElement;
@@ -90,61 +79,92 @@
     }
 </script>
 
-<div>
-    <h1>Import Your Chats</h1>
-
-    <form on:submit={processForm}>
-        <fieldset>
-            <legend>Provider:</legend>
-            <div>
-                <input
-                    type="radio"
-                    id="chatgpt"
-                    value="chatgpt"
-                    name="provider"
-                    bind:group={selectedProvider}
-                    on:change={handleProviderChange}
-                />
-                <label for="chatgpt">ChatGPT</label>
+<div class="h-full">
+    <form on:submit={processForm} class="space-y-6">
+        <fieldset class="p-4 border border-base-300 rounded-box space-y-2">
+            <legend class="text-lg font-medium px-2">Provider:</legend>
+            <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-2">
+                    <input
+                        class="radio radio-primary"
+                        type="radio"
+                        value="chatgpt"
+                        name="provider"
+                        bind:group={selectedProvider}
+                        on:change={handleProviderChange}
+                    />
+                    <span class="label-text">ChatGPT</span>
+                </label>
             </div>
-            <div>
-                <input
-                    type="radio"
-                    id="claude"
-                    value="claude"
-                    name="provider"
-                    bind:group={selectedProvider}
-                    on:change={handleProviderChange}
-                />
-                <label for="claude">Claude</label>
+            <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-2">
+                    <input
+                        class="radio radio-primary"
+                        type="radio"
+                        value="claude"
+                        name="provider"
+                        bind:group={selectedProvider}
+                        on:change={handleProviderChange}
+                    />
+                    <span class="label-text">Claude</span>
+                </label>
             </div>
             {#if providerWarning}
-                <p class="warning">{providerWarning}</p>
+                <div role="alert" class="alert alert-warning p-2 mt-2">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="stroke-current shrink-0 h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        ><path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 9v2m0
+4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732
+4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        /></svg
+                    >
+                    <span class="text-sm">{providerWarning}</span>
+                </div>
             {/if}
         </fieldset>
 
-        <fieldset>
-            <legend>Upload File:</legend>
-            <div>
-                <label for="file-upload">Choose JSON file:</label>
+        <fieldset class="p-4 border border-base-300 rounded-box space-y-2">
+            <legend class="text-lg font-medium px-2">Upload JSON File</legend>
+            <div class="form-control w-full">
                 <input
+                    class="file-input file-input-bordered file-input-primary
+w-full"
                     type="file"
                     id="file-upload"
                     accept="application/json, text/json"
                     on:change={handleFileChange}
                 />
                 {#if fileWarning}
-                    <p class="warning">{fileWarning}</p>
+                    <div role="alert" class="alert alert-error p-2 mt-2">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="stroke-current shrink-0 h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 14l2-2m0
+0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            /></svg
+                        >
+                        <span class="text-sm">{fileWarning}</span>
+                    </div>
                 {/if}
             </div>
+            <button class="btn btn-primary mt-4 w-full" type="submit"
+                >Import</button
+            >
         </fieldset>
-
-        <button type="submit">Import</button>
     </form>
-
-    <nav>
-        <a href="options.html">Go back to Options</a>
-    </nav>
 </div>
 
 <!-- <style>
