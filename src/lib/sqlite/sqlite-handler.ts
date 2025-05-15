@@ -1,4 +1,4 @@
-import sqlite3InitModule from '@sqlite.org/sqlite-wasm';
+import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 
 // Database interface for our application
 export interface SqliteDb {
@@ -10,7 +10,7 @@ export interface SqliteDb {
 // Schema definition
 const SCHEMA = `
   CREATE TABLE IF NOT EXISTS "conversations" (
-    "id" INTEGER PRIMARY KEY,
+    "id" TEXT PRIMARY KEY,
     "source" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "created_at" INTEGER NOT NULL,
@@ -44,7 +44,7 @@ const SCHEMA = `
 `;
 
 // Check if we're in a service worker context
-const isServiceWorker = typeof self !== 'undefined' && !self.window;
+const isServiceWorker = typeof self !== "undefined" && !self.window;
 
 // Initialize SQLite with OPFS support
 export async function initSqlite(): Promise<SqliteDb | null> {
@@ -57,7 +57,7 @@ export async function initSqlite(): Promise<SqliteDb | null> {
       return await initWorkerSqlite();
     }
   } catch (error) {
-    console.error('Failed to initialize SQLite:', error);
+    console.error("Failed to initialize SQLite:", error);
     return null;
   }
 }
@@ -66,25 +66,28 @@ export async function initSqlite(): Promise<SqliteDb | null> {
 async function initDirectSqlite(): Promise<SqliteDb | null> {
   console.log("Using direct SQLite initialization");
   const sqlite3 = await sqlite3InitModule({
-    locateFile: (file: string) => chrome.runtime.getURL(`wasm/${file}`)
+    locateFile: (file: string) => chrome.runtime.getURL(`wasm/${file}`),
   });
 
-  console.log('SQLite version:', sqlite3.version.libVersion);
+  console.log("SQLite version:", sqlite3.version.libVersion);
 
   try {
     // Check if OPFS is available
-    const db = 'opfs' in sqlite3
-      ? new sqlite3.oo1.OpfsDb('/conversations.db')
-      : new sqlite3.oo1.DB('/conversations.db', 'ct');
+    const db =
+      "opfs" in sqlite3
+        ? new sqlite3.oo1.OpfsDb("/conversations.db")
+        : new sqlite3.oo1.DB("/conversations.db", "ct");
 
-    console.log('OPFS is ' + ('opfs' in sqlite3 ? 'available' : 'not available'));
+    console.log(
+      "OPFS is " + ("opfs" in sqlite3 ? "available" : "not available"),
+    );
 
     // Create tables
     db.exec(SCHEMA);
-    console.log('Database tables initialized');
+    console.log("Database tables initialized");
     return { db };
   } catch (error) {
-    console.error('Error initializing database:', error);
+    console.error("Error initializing database:", error);
     return null;
   }
 }
@@ -93,35 +96,35 @@ async function initDirectSqlite(): Promise<SqliteDb | null> {
 async function initWorkerSqlite(): Promise<SqliteDb | null> {
   console.log("Using worker-based SQLite initialization");
   // Import dynamically to avoid Worker reference in service worker
-  const { sqlite3Worker1Promiser } = await import('@sqlite.org/sqlite-wasm');
+  const { sqlite3Worker1Promiser } = await import("@sqlite.org/sqlite-wasm");
 
   // Create a promiser that communicates with the SQLite worker
   const promiser = await new Promise<any>((resolve) => {
     const _promiser = sqlite3Worker1Promiser({
       onready: () => resolve(_promiser),
-      workerPath: chrome.runtime.getURL('wasm/sqlite3-worker1.js'),
-      wasmPath: chrome.runtime.getURL('wasm/sqlite3.wasm'),
+      workerPath: chrome.runtime.getURL("wasm/sqlite3-worker1.js"),
+      wasmPath: chrome.runtime.getURL("wasm/sqlite3.wasm"),
     });
   });
 
-  console.log('SQLite worker promiser ready');
+  console.log("SQLite worker promiser ready");
 
   // Get SQLite configuration
-  const configResponse = await promiser('config-get', {});
-  console.log('SQLite version:', configResponse.result.version.libVersion);
+  const configResponse = await promiser("config-get", {});
+  console.log("SQLite version:", configResponse.result.version.libVersion);
 
   // Open a database with OPFS for persistence
-  const dbResponse = await promiser('open', {
-    filename: 'file:conversations.db?vfs=opfs',
-    flags: 'c' // Create if it doesn't exist
+  const dbResponse = await promiser("open", {
+    filename: "file:conversations.db?vfs=opfs",
+    flags: "c", // Create if it doesn't exist
   });
 
   const { dbId } = dbResponse;
-  console.log('Database opened with ID:', dbId);
+  console.log("Database opened with ID:", dbId);
 
   // Create tables
-  await promiser('exec', { dbId, sql: SCHEMA });
-  console.log('Database tables initialized');
+  await promiser("exec", { dbId, sql: SCHEMA });
+  console.log("Database tables initialized");
 
   return { promiser, dbId };
 }
@@ -129,59 +132,68 @@ async function initWorkerSqlite(): Promise<SqliteDb | null> {
 // Execute a database operation with transaction support
 async function executeWithTransaction(
   db: SqliteDb,
-  operation: (exec: (sql: string, params?: any[]) => any) => Promise<void>
+  operation: (exec: (sql: string, params?: any[]) => any) => Promise<void>,
 ): Promise<boolean> {
   const exec = db.db
     ? (sql: string, params: any[] = []) => db.db.exec({ sql, bind: params })
-    : async (sql: string, params: any[] = []) => await db.promiser('exec', {
-        dbId: db.dbId,
-        sql,
-        bind: params
-      });
+    : async (sql: string, params: any[] = []) =>
+        await db.promiser("exec", {
+          dbId: db.dbId,
+          sql,
+          bind: params,
+        });
 
   try {
-    await exec('BEGIN TRANSACTION;');
+    await exec("BEGIN TRANSACTION;");
     await operation(exec);
-    await exec('COMMIT;');
+    await exec("COMMIT;");
     return true;
   } catch (error) {
-    console.error('Database operation error:', error);
+    console.error("Database operation error:", error);
     try {
-      await exec('ROLLBACK;');
+      await exec("ROLLBACK;");
     } catch (rollbackError) {
-      console.error('Error during rollback:', rollbackError);
+      console.error("Error during rollback:", rollbackError);
     }
     return false;
   }
 }
 
 // Save a conversation to the database
-export async function saveConversation(db: SqliteDb, conversation: any): Promise<boolean> {
+export async function saveConversation(
+  db: SqliteDb,
+  conversation: any,
+): Promise<boolean> {
   // Prepare content from messages if needed
   let content = conversation.content;
   if (!content && conversation.messages) {
-    content = conversation.messages.map((msg: any) =>
-      `${msg.author}: ${msg.content}`
-    ).join('\n\n');
+    // content = conversation.messages
+    //   .map((msg: any) => `${msg.author}: ${msg.content}`)
+    //   .join("\n\n");
+    content = JSON.stringify(conversation.messages);
   }
+  console.log({ content });
 
   return executeWithTransaction(db, async (exec) => {
-    await exec(`
+    await exec(
+      `
       INSERT OR REPLACE INTO conversations (
         id, source, title, created_at, updated_at,
         url, meta, tags, content
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-    `, [
-      conversation.id,
-      conversation.source,
-      conversation.title,
-      conversation.created_at,
-      conversation.updated_at,
-      conversation.url || null,
-      conversation.meta || null,
-      conversation.tags || null,
-      content
-    ]);
+    `,
+      [
+        conversation.id,
+        conversation.source,
+        conversation.title,
+        conversation.created_at,
+        conversation.updated_at,
+        conversation.url || null,
+        conversation.meta || null,
+        conversation.tags || null,
+        content,
+      ],
+    );
   });
 }
 
@@ -189,21 +201,23 @@ export async function saveConversation(db: SqliteDb, conversation: any): Promise
 export async function getConversations(db: SqliteDb): Promise<any[]> {
   try {
     let rows;
+    console.log({ db });
 
     if (db.db) {
       rows = db.db.exec({
-        sql: 'SELECT id, source, title, created_at, updated_at, url, meta, tags FROM conversations ORDER BY updated_at DESC;',
-        returnValue: 'resultRows'
+        sql: "SELECT id, source, title, created_at, updated_at, url, meta, tags, content FROM conversations ORDER BY updated_at DESC;",
+        returnValue: "resultRows",
       });
     } else if (db.promiser && db.dbId) {
-      rows = await db.promiser('exec', {
+      rows = await db.promiser("exec", {
         dbId: db.dbId,
-        sql: 'SELECT id, source, title, created_at, updated_at, url, meta, tags FROM conversations ORDER BY updated_at DESC;',
-        returnValue: 'resultRows'
+        sql: "SELECT id, source, title, created_at, updated_at, url, meta, tags, content FROM conversations ORDER BY updated_at DESC;",
+        returnValue: "resultRows",
       });
     } else {
-      throw new Error('Invalid database connection');
+      throw new Error("Invalid database connection");
     }
+    console.log({ rows });
 
     return rows.map((row: any) => ({
       id: row[0],
@@ -213,34 +227,38 @@ export async function getConversations(db: SqliteDb): Promise<any[]> {
       updated_at: row[4],
       url: row[5],
       meta: row[6],
-      tags: row[7]
+      tags: row[7],
+      messages: JSON.parse(row[8]),
     }));
   } catch (error) {
-    console.error('Error getting conversations:', error);
+    console.error("Error getting conversations:", error);
     return [];
   }
 }
 
 // Get a single conversation with its content
-export async function getConversation(db: SqliteDb, conversationId: string): Promise<any | null> {
+export async function getConversation(
+  db: SqliteDb,
+  conversationId: string,
+): Promise<any | null> {
   try {
     let rows;
 
     if (db.db) {
       rows = db.db.exec({
-        sql: 'SELECT * FROM conversations WHERE id = ?;',
+        sql: "SELECT * FROM conversations WHERE id = ?;",
         bind: [conversationId],
-        returnValue: 'resultRows'
+        returnValue: "resultRows",
       });
     } else if (db.promiser && db.dbId) {
-      rows = await db.promiser('exec', {
+      rows = await db.promiser("exec", {
         dbId: db.dbId,
-        sql: 'SELECT * FROM conversations WHERE id = ?;',
+        sql: "SELECT * FROM conversations WHERE id = ?;",
         bind: [conversationId],
-        returnValue: 'resultRows'
+        returnValue: "resultRows",
       });
     } else {
-      throw new Error('Invalid database connection');
+      throw new Error("Invalid database connection");
     }
 
     if (!rows || !rows.length) return null;
@@ -254,42 +272,49 @@ export async function getConversation(db: SqliteDb, conversationId: string): Pro
       url: rows[0][5],
       meta: rows[0][6],
       tags: rows[0][7],
-      content: rows[0][8]
+      content: rows[0][8],
     };
   } catch (error) {
-    console.error('Error getting conversation:', error);
+    console.error("Error getting conversation:", error);
     return null;
   }
 }
 
 // Delete a conversation
-export async function deleteConversation(db: SqliteDb, conversationId: string): Promise<boolean> {
+export async function deleteConversation(
+  db: SqliteDb,
+  conversationId: string,
+): Promise<boolean> {
   return executeWithTransaction(db, async (exec) => {
-    await exec('DELETE FROM conversations WHERE id = ?;', [conversationId]);
+    await exec("DELETE FROM conversations WHERE id = ?;", [conversationId]);
   });
 }
 
 // Execute arbitrary SQL query
-export async function executeQuery(db: SqliteDb, sql: string, params: any[] = []): Promise<any> {
+export async function executeQuery(
+  db: SqliteDb,
+  sql: string,
+  params: any[] = [],
+): Promise<any> {
   try {
     if (db.db) {
       return db.db.exec({
         sql,
         bind: params,
-        returnValue: 'resultRows'
+        returnValue: "resultRows",
       });
     } else if (db.promiser && db.dbId) {
-      return await db.promiser('exec', {
+      return await db.promiser("exec", {
         dbId: db.dbId,
         sql,
         bind: params,
-        returnValue: 'resultRows'
+        returnValue: "resultRows",
       });
     } else {
-      throw new Error('Invalid database connection');
+      throw new Error("Invalid database connection");
     }
   } catch (error) {
-    console.error('Error executing query:', error);
+    console.error("Error executing query:", error);
     throw error;
   }
 }
