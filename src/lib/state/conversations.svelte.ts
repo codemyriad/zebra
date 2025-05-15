@@ -55,29 +55,33 @@ export async function loadConversationsFromBackground() {
   });
 }
 
-export async function addNewConversationAndRefresh(
-  newConversationData: any /*
+export async function addNewConversationsAndRefresh(
+  newConversationData: Conversation[] /*
 Adjust type as needed */,
 ) {
-  return new Promise<void>((resolve, reject) => {
-    chrome.runtime.sendMessage(
-      { type: "SAVE_CONVERSATION", conversation: newConversationData },
-      (response) => {
-        if (response && response.success) {
-          console.log(
-            "Shared Rune State: Conversation saved, refreshing list...",
-          );
-          loadConversationsFromBackground().then(resolve).catch(reject);
-        } else {
-          const errorMsg =
-            response?.error || "Unknown error saving   conversation";
-          console.error(
-            "Shared Rune State: Failed to save conversation.",
-            errorMsg,
-          );
-          reject(new Error(errorMsg));
-        }
-      },
-    );
-  });
+  return Promise.all(
+    newConversationData.map((convo) => {
+      return new Promise<void>((resolve, reject) =>
+        chrome.runtime.sendMessage(
+          { type: "SAVE_CONVERSATION", conversation: convo },
+          (response) => {
+            if (response && response.success) {
+              console.log(
+                "Shared Rune State: Conversation saved, refreshing list...",
+              );
+              resolve();
+            } else {
+              const errorMsg =
+                response?.error || "Unknown error saving   conversation";
+              console.error(
+                "Shared Rune State: Failed to save conversation.",
+                errorMsg,
+              );
+              reject(new Error(errorMsg));
+            }
+          },
+        ),
+      );
+    }),
+  ).then(loadConversationsFromBackground);
 }

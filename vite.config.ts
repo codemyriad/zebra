@@ -19,7 +19,6 @@ export default defineConfig({
         content_claude: resolve(__dirname, "src/content/claude.ts"),
         options: resolve(__dirname, "src/options/options.html"),
         app: resolve(__dirname, "src/app.css"),
-        import: resolve(__dirname, "src/options/import.html"),
       },
       output: {
         entryFileNames: `assets/[name].js`,

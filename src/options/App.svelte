@@ -3,7 +3,6 @@
     import { BotMessageSquare, Menu } from "lucide-svelte";
 
     import Sidebar from "../lib/components/Sidebar.svelte";
-    import ImportForm from "../lib/components/ImportForm.svelte";
     import type { Conversation } from "../lib/types/content";
     import Chat from "../lib/components/Chat.svelte";
     import {
@@ -64,7 +63,6 @@
                 class="text-center text-base-content/60 max-w-md flex flex-col gap-y-2 items-center"
             >
                 <BotMessageSquare size={64} />
-                <ImportForm />
                 <Chat convs={conversations} {selectedConversation} />
                 <p class="text-lg">
                     No conversations found. Start chatting with an LLM to see
