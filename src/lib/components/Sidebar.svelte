@@ -104,7 +104,7 @@
             {:else}
                 <ul class="space-y-2">
                     {#each conversations as conversation}
-                        {#if selectedSource === "all" || conversation.source === selectedSource}
+                        {#if selectedSource === "all" || conversation.source.toLowerCase() === selectedSource}
                             <li>
                                 <button
                                     class="block p-2 hover:bg-base-300 rounded-lg"
