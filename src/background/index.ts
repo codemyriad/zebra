@@ -1,7 +1,14 @@
 console.log("Zebra Background Service Worker Started.");
 
 // Import SQLite functions
-import { initSqlite, saveConversation, getConversations, getConversation, deleteConversation, executeQuery } from "../lib/sqlite/sqlite-handler";
+import {
+  initSqlite,
+  saveConversation,
+  getConversations,
+  getConversation,
+  deleteConversation,
+  executeQuery,
+} from "../lib/sqlite/sqlite-handler";
 
 // Global database connection
 let sqliteDb = null;
@@ -18,7 +25,7 @@ let sqliteDb = null;
     console.log("Query result:", result);
     return result;
   } catch (error) {
-    console.error('Error executing query:', error);
+    console.error("Error executing query:", error);
     return null;
   }
 };
@@ -46,8 +53,8 @@ function handleDbOperation(operation, request, sendResponse) {
   }
 
   operation(request)
-    .then(result => sendResponse({ success: true, ...result }))
-    .catch(error => {
+    .then((result) => sendResponse({ success: true, ...result }))
+    .catch((error) => {
       console.error(`Error: ${error.message}`);
       sendResponse({ success: false, error: error.message });
     });
@@ -58,26 +65,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("Message received in background:", request);
 
   const operations = {
-    "SAVE_CONVERSATION": async (req) => {
+    SAVE_CONVERSATION: async (req) => {
       const result = await saveConversation(sqliteDb, req.conversation);
       return { result };
     },
-    "GET_CONVERSATIONS": async () => {
+    GET_CONVERSATIONS: async () => {
       const conversations = await getConversations(sqliteDb);
+      console.log({ conversations });
       return { conversations };
     },
-    "GET_CONVERSATION": async (req) => {
+    GET_CONVERSATION: async (req) => {
       const conversation = await getConversation(sqliteDb, req.id);
       return { conversation };
     },
-    "DELETE_CONVERSATION": async (req) => {
+    DELETE_CONVERSATION: async (req) => {
       const result = await deleteConversation(sqliteDb, req.id);
       return { result };
     },
-    "EXECUTE_QUERY": async (req) => {
+    EXECUTE_QUERY: async (req) => {
       const result = await executeQuery(sqliteDb, req.sql, req.params || []);
       return { result };
-    }
+    },
   };
 
   if (request.greeting === "hello from popup") {
