@@ -1,0 +1,86 @@
+[
+  {
+    "title": "Access ChatGPT Past Chats",
+    "create_time": 1746606303.582446,
+    "update_time": 1746608481.539804,
+    "mapping": {
+      "ce351cad-9b99-44db-9f9d-13def5503caf": {
+        "id": "ce351cad-9b99-44db-9f9d-13def5503caf",
+        "message": {
+          "id": "ce351cad-9b99-44db-9f9d-13def5503caf",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1746527789.624696,
+          "update_time": null,
+          "content": {
+            "content_type": "thoughts",
+            "thoughts": [
+              {
+                "summary": "Searching for API documentation",
+                "content": "The user seems to be a developer familiar with the JS console and likely looking for an example code snippet. I'll need to check if the relevant API endpoints are still valid as of May 2025, so I’ll search for the latest API documentation. It might involve looking at community posts or official sources. Also, I should provide code examples and clarify endpoint usage, like the \"conversation listing\" endpoint. Let's make sure everything is still correct before proceeding."
+              }
+            ],
+            "source_analysis_msg_id": "e73d3360-e35f-4c3d-a971-a414bf7cd090"
+          },
+          "status": "finished_successfully",
+          "end_turn": false,
+          "weight": 1.0,
+          "metadata": {
+            "reasoning_status": "is_reasoning",
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "o3",
+            "default_model_slug": "o3",
+            "parent_id": "b85b9da4-e5f6-4a23-94b9-0171fee689d8",
+            "request_id": "93b7d52a0ad1fc3e-MXP",
+            "timestamp_": "absolute",
+            "shared_conversation_id": "6819edcc-0210-800a-acd0-136403a515fc"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "2956c606-1271-45b3-b72e-ab13e78ecd30",
+        "children": ["a9b5e058-77d7-4381-9f84-644908806c46"]
+      }
+    },
+    "moderation_results": [],
+    "current_node": "688f896c-dd9e-466b-89d7-9289cf2b0045",
+    "plugin_ids": null,
+    "conversation_id": "681b18df-10f4-800a-8780-eaa1ec13c5eb",
+    "conversation_template_id": null,
+    "gizmo_id": null,
+    "gizmo_type": null,
+    "is_archived": false,
+    "is_starred": null,
+    "safe_urls": [
+      "https://help.openai.com/en/articles/7730893-data-controls-faq?utm_source=chatgpt.com",
+      "https://gist.github.com/flymop/bcbb6b2c3089b2203b199570ab259d74",
+      "https://chat.openai.com/backend-api/conversation/",
+      "https://gist.github.com/0xdevalias/4e54bb28a02db5357ea4fa3a872fc5fc",
+      "https://openai.com/policies/usage-policies",
+      "https://ec.europa.eu/consumers/odr⁠(opens",
+      "https://news.ycombinator.com/item?id=35268197&utm_source=chatgpt.com",
+      "https://aletheia.medium.com/demystifing-chatgpt-c9ab468ccc84",
+      "https://github.com/mmabrouk/chatgpt-wrapper/issues/290?utm_source=chatgpt.com",
+      "https://community.openai.com/t/getting-a-cloudflare-access-denied-error-on-chat-gpt3-site/30480?utm_source=chatgpt.com",
+      "https://community.openai.com/t/502s-on-https-chat-openai-com-backend-api-conversation-endpoint/606743",
+      "https://gist.github.com/TobyMaxham/5197e9f64196d6c8cb1e027ef99cae1d",
+      "https://openai.com/about",
+      "orgs.map",
+      "https://medium.com/%40BryMei/how-does-openai-structure-chatgpt-and-its-api-for-millions-of-users-bad826523b31?utm_source=chatgpt.com"
+    ],
+    "blocked_urls": [],
+    "default_model_slug": "o3",
+    "conversation_origin": null,
+    "voice": null,
+    "async_status": null,
+    "disabled_tool_ids": [],
+    "is_do_not_remember": null,
+    "memory_scope": "global_enabled",
+    "id": "681b18df-10f4-800a-8780-eaa1ec13c5eb"
+  }
+]
