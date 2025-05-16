@@ -7,6 +7,7 @@
         conversationsResult,
         setSelectedConversation,
         setConversationsResult,
+        getConversationsResult,
     } from "../state/conversations.svelte";
 
     let {
@@ -27,10 +28,14 @@
         { id: "claude", name: "Claude", count: 0 },
     ];
 
-    function handleSearch(event: Event) {
+    async function handleSearch(event: Event) {
         if (event instanceof KeyboardEvent && event.key === "Enter") {
             setConversationsResult(searchQuery);
-            setSelectedConversation(conversationsResult[0]);
+            const convResult = await getConversationsResult();
+            if (convResult.length) {
+                setSelectedConversation(convResult[0]);
+            }
+
             console.log(`Searching for: ${searchQuery}`);
         }
     }
