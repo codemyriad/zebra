@@ -84,6 +84,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     },
     EXECUTE_QUERY: async (req) => {
       const result = await executeQuery(sqliteDb, req.sql, req.params || []);
+      console.log({ result });
+
       return { result };
     },
   };

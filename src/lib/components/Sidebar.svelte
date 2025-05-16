@@ -3,7 +3,11 @@
     import ThemeSwitcher from "./ThemeSwitcher.svelte";
     import ImportForm from "./ImportForm.svelte";
     import type { Conversation } from "../types/content";
-    import { setSelectedConversation } from "../state/conversations.svelte";
+    import {
+        conversationsResult,
+        setSelectedConversation,
+        setConversationsResult,
+    } from "../state/conversations.svelte";
 
     let {
         searchQuery,
@@ -25,7 +29,8 @@
 
     function handleSearch(event: Event) {
         if (event instanceof KeyboardEvent && event.key === "Enter") {
-            // TODO: Implement search functionality
+            setConversationsResult(searchQuery);
+            setSelectedConversation(conversationsResult[0]);
             console.log(`Searching for: ${searchQuery}`);
         }
     }
@@ -94,9 +99,32 @@
             </div>
         </div>
 
+        <!-- Search Result Conversation List -->
+        <div class="grow">
+            <h3 class="font-medium mb-2">Search Result</h3>
+            {#if conversationsResult.length === 0}
+                <div class="text-sm opacity-70 p-4 text-center">
+                    Search for a keyword in the search bar above...
+                </div>
+            {:else}
+                <ul class="space-y-2">
+                    {#each conversationsResult as conversation}
+                        <li>
+                            <button
+                                class="block p-2 hover:bg-base-300 rounded-lg"
+                                onclick={() =>
+                                    setSelectedConversation(conversation)}
+                            >
+                                {conversation.title}
+                            </button>
+                        </li>
+                    {/each}
+                </ul>
+            {/if}
+        </div>
         <!-- Conversation List -->
         <div class="grow">
-            <h3 class="font-medium mb-2">Conversations</h3>
+            <h3 class="font-medium mb-2">All Conversations</h3>
             {#if conversations.length === 0}
                 <div class="text-sm opacity-70 p-4 text-center">
                     No conversations found

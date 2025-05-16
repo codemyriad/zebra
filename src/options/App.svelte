@@ -6,12 +6,12 @@
     import type { Conversation } from "../lib/types/content";
     import Chat from "../lib/components/Chat.svelte";
     import {
-        addNewConversationAndRefresh,
         conversations,
         loadConversationsFromBackground,
         getSelectedConversation,
         selectedConversation,
     } from "../lib/state/conversations.svelte";
+    import { executeQuery } from "../lib/sqlite/sqlite-handler";
 
     let searchQuery = $state("");
     // let selectedConversation = $state<Conversation>();
@@ -36,6 +36,19 @@
         if (urlSearchQuery) {
             searchQuery = urlSearchQuery;
             // TODO: Trigger search with the query
+            chrome.runtime.sendMessage(
+                {
+                    type: "EXECUTE_QUERY",
+                    sql: "SELECT * FROM conversations WHERE source LIKE ?",
+                    params: [`%${searchQuery}%`],
+                },
+                (response) => {
+                    if (response.success) {
+                        console.log("Query result:", response.result);
+                    }
+                },
+            );
+
             console.log(`Searching for: ${searchQuery}`);
         }
     });
