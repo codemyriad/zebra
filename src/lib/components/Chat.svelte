@@ -50,7 +50,7 @@ badge-outline">{selectedConversation.source}</span
                             </time>
                         </div>
                         <div
-                            class="chat-bubble chat-bubble-primary w-full
+                            class="chat-bubble chat-bubble-primary
 text-base"
                         >
                             {@html md.render(msg.content)}
