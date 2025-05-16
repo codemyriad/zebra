@@ -23,14 +23,24 @@ export function setSelectedConversation(conversation: Conversation) {
 export function getSelectedConversation() {
   return selectedConversation;
 }
-
+export async function getConversationsResult() {
+  return conversationsResult;
+}
 export async function setConversationsResult(searchQuery: string) {
   return new Promise<void>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
         type: "EXECUTE_QUERY",
-        sql: "SELECT * FROM conversations WHERE content LIKE ?",
-        params: [`%${searchQuery}%`],
+        sql: `
+             SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
+   c.meta, c.tags, c.content
+             FROM conversations c
+             JOIN conversations_fts_idx fts ON c.id =
+   fts.rowid_original_conversations
+             WHERE conversations_fts_idx MATCH ?
+             ORDER BY rank -- FTS5 implicit rank column for relevance
+           `,
+        params: [searchQuery], // Pass the search query directly for FTS MATCH
       },
       (response) => {
         if (response.success) {

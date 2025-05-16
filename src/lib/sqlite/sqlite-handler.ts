@@ -21,6 +21,39 @@ const SCHEMA = `
     "content" TEXT NOT NULL
   );
 
+
+-- Create the FTS5 virtual table for searching title and content
+CREATE VIRTUAL TABLE IF NOT EXISTS "conversations_fts_idx" USING fts5(
+rowid_original_conversations, -- Stores the ID from the 'conversations' table
+title,
+content,
+tokenize='porter' -- Optional: 'porter' stemmer for better search results
+);
+
+-- Trigger to insert into FTS table when a new conversation is added
+CREATE TRIGGER IF NOT EXISTS conversations_ai AFTER INSERT ON conversations
+BEGIN
+INSERT INTO conversations_fts_idx (rowid_original_conversations, title,
+content)
+VALUES (new.id, new.title, new.content);
+END;
+
+-- Trigger to delete from FTS table when a conversation is deleted
+CREATE TRIGGER IF NOT EXISTS conversations_ad AFTER DELETE ON conversations
+BEGIN
+DELETE FROM conversations_fts_idx WHERE rowid_original_conversations =
+old.id;
+END;
+
+-- Trigger to update FTS table when a conversation is updated
+CREATE TRIGGER IF NOT EXISTS conversations_au AFTER UPDATE ON conversations
+BEGIN
+UPDATE conversations_fts_idx
+SET title = new.title, content = new.content
+WHERE rowid_original_conversations = old.id;
+END;
+
+
   CREATE INDEX IF NOT EXISTS "conversations_index_0"
   ON "conversations" ("source", "title", "created_at");
 
