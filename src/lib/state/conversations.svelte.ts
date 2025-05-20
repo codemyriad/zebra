@@ -84,6 +84,7 @@ export async function loadConversationsFromBackground() {
     chrome.runtime.sendMessage({ type: "GET_CONVERSATIONS" }, (response) => {
       if (response && response.success) {
         conversations.length = 0;
+        setSelectedConversation(response.conversations[0]);
         for (const conv of response.conversations) {
           conversations.push(conv);
         }

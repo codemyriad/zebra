@@ -75,11 +75,14 @@
             <div class="max-w-3xl flex flex-col gap-y-2 items-center">
                 <BotMessageSquare size={64} />
 
-                <Chat convs={conversations} {selectedConversation} />
-                <p class="text-lg">
-                    No conversations found. Start chatting with an LLM to see
-                    your history here.
-                </p>
+                {#if conversations.length}
+                    <Chat convs={conversations} {selectedConversation} />
+                {:else}
+                    <p class="text-lg">
+                        No conversations found. Start chatting with an LLM to
+                        see your history here.
+                    </p>
+                {/if}
             </div>
         </div>
     </div>
