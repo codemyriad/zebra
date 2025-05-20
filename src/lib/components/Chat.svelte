@@ -50,8 +50,7 @@ badge-outline">{selectedConversation.source}</span
                             </time>
                         </div>
                         <div
-                            class="chat-bubble chat-bubble-primary
-text-base"
+                            class="prose lg:prose-xl chat-bubble chat-bubble-primary"
                         >
                             {@html md.render(msg.content)}
                         </div>
@@ -67,7 +66,9 @@ text-base"
                                 {new Date(msg.created_at).toLocaleString()}
                             </time>
                         </div>
-                        <div class="chat-bubble w-full text-base">
+                        <div
+                            class="prose lg:prose-xl chat-bubble text-gray-300"
+                        >
                             {@html md.render(msg.content)}
                         </div>
                         <div class="chat-footer opacity-50"></div>
