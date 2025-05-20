@@ -72,15 +72,17 @@
         <div
             class="card bg-base-200 shadow-xl p-6 min-h-[70vh] flex items-center justify-center"
         >
-            <div
-                class="text-center text-base-content/60 max-w-md flex flex-col gap-y-2 items-center"
-            >
+            <div class="max-w-3xl flex flex-col gap-y-2 items-center">
                 <BotMessageSquare size={64} />
-                <Chat convs={conversations} {selectedConversation} />
-                <p class="text-lg">
-                    No conversations found. Start chatting with an LLM to see
-                    your history here.
-                </p>
+
+                {#if conversations.length}
+                    <Chat convs={conversations} {selectedConversation} />
+                {:else}
+                    <p class="text-lg">
+                        No conversations found. Start chatting with an LLM to
+                        see your history here.
+                    </p>
+                {/if}
             </div>
         </div>
     </div>
