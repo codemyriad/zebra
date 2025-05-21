@@ -58,7 +58,7 @@ END;
   ON "conversations" ("source", "title", "created_at");
 
   -- Trigger for INSERT
-  CREATE TRIGGER ensure_content_json_insert
+  CREATE TRIGGER IF NOT EXISTS ensure_content_json_insert
   BEFORE INSERT ON conversations
   FOR EACH ROW
   WHEN json_valid(NEW.content, 6) <> 1
@@ -67,7 +67,7 @@ END;
   END;
 
   -- Trigger for UPDATE of content
-  CREATE TRIGGER ensure_content_json_update
+  CREATE TRIGGER IF NOT EXISTS ensure_content_json_update
   BEFORE UPDATE OF content ON conversations
   FOR EACH ROW
   WHEN json_valid(NEW.content, 6) <> 1
@@ -106,6 +106,9 @@ async function initDirectSqlite(): Promise<SqliteDb | null> {
 
   try {
     // Check if OPFS is available
+    if (sqlite3.capi.sqlite3_vfs_find("opfs")) {
+      console.log("... OPFS VFS is available ...");
+    }
     const db =
       "opfs" in sqlite3
         ? new sqlite3.oo1.OpfsDb("/conversations.db")
@@ -252,7 +255,7 @@ export async function getConversations(db: SqliteDb): Promise<any[]> {
     }
     console.log({ rows });
 
-    return rows.map((row: any) => ({
+    return rows.result.resultRows.map((row: any) => ({
       id: row[0],
       source: row[1],
       title: row[2],
