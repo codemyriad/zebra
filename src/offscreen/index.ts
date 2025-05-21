@@ -6,6 +6,7 @@ import {
   deleteConversation,
   executeQuery,
   type SqliteDb,
+  saveConversations,
 } from "../lib/sqlite/sqlite-handler";
 
 let sqliteDb: SqliteDb | null = null;
@@ -64,6 +65,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const operations: { [key: string]: (req: any) => Promise<any> } = {
     SAVE_CONVERSATION: async (req) => {
       const result = await saveConversation(sqliteDb!, req.conversation);
+      return { result };
+    },
+    SAVE_CONVERSATIONS: async (req) => {
+      const result = await saveConversations(sqliteDb!, req.conversations);
       return { result };
     },
     GET_CONVERSATIONS: async () => {
