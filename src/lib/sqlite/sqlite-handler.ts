@@ -1,4 +1,5 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
+import type { Conversation } from "../types/content";
 
 // Database interface for our application
 export interface SqliteDb {
@@ -230,6 +231,45 @@ export async function saveConversation(
         content,
       ],
     );
+  });
+}
+
+export async function saveConversations(
+  db: SqliteDb,
+  conversations: Conversation[],
+): Promise<boolean> {
+  return executeWithTransaction(db, async (exec) => {
+    for (const conversation of conversations) {
+      // Prepare content from messages if needed
+      let content = conversation.content;
+      if (!content && conversation.messages) {
+        // content = conversation.messages
+        //   .map((msg: any) => `${msg.author}: ${msg.content}`)
+        //   .join("\n\n");
+        content = JSON.stringify(conversation.messages);
+      }
+      console.log({ content });
+
+      await exec(
+        `
+      INSERT OR REPLACE INTO conversations (
+        id, source, title, created_at, updated_at,
+        url, meta, tags, content
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `,
+        [
+          conversation.id,
+          conversation.source,
+          conversation.title,
+          conversation.created_at,
+          conversation.updated_at,
+          conversation.url || null,
+          conversation.meta || null,
+          conversation.tags || null,
+          content,
+        ],
+      );
+    }
   });
 }
 

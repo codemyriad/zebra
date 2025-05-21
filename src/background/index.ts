@@ -60,64 +60,6 @@ async function setupOffscreenDocument(path: string) {
 // or when it's needed.
 setupOffscreenDocument(OFFSCREEN_DOCUMENT_PATH);
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("Background: Message received", request);
-
-  if (request.greeting === "hello from popup") {
-    sendResponse({ farewell: "goodbye from background" });
-    return false;
-  }
-
-  const dbOperations = [
-    "SAVE_CONVERSATION",
-    "GET_CONVERSATIONS",
-    "GET_CONVERSATION",
-    "DELETE_CONVERSATION",
-    "EXECUTE_QUERY",
-  ];
-
-  if (request && request.type && dbOperations.includes(request.type)) {
-    setupOffscreenDocument(OFFSCREEN_DOCUMENT_PATH)
-      .then(() => {
-        chrome.runtime.sendMessage(
-          request, // Forward the original request
-          (response) => {
-            if (chrome.runtime.lastError) {
-              console.error(
-                "Background: Error sending/receiving message to/from offscreen:",
-                chrome.runtime.lastError.message,
-                "Original request:",
-                request,
-              );
-              sendResponse({
-                success: false,
-                error: `Failed to communicate with
-offscreen document: ${chrome.runtime.lastError.message}`,
-              });
-            } else {
-              sendResponse(response);
-            }
-          },
-        );
-      })
-      .catch((err) => {
-        console.error(
-          "Background: Failed to setup offscreen document before sending message:",
-          err,
-        );
-        sendResponse({
-          success: false,
-          error: "Failed to ensure offscreen document is ready.",
-        });
-      });
-    return true;
-  } else {
-    console.warn("Background: Unknown operation or non-DB message", request);
-    sendResponse({ success: false, error: "Background: Unknown operation" });
-    return false;
-  }
-});
-
 chrome.action.onClicked.addListener(async () => {
   // This is an example action; you might use it to open your extension's UI
   // or for testing the offscreen document setup.

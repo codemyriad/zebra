@@ -14,6 +14,10 @@ export type Conversation = {
   /** ChatGPT, Claude, etc. */
   source: string;
   messages: Message[];
+  content?: string;
+  url?: string;
+  meta?: string;
+  tags?: string;
 };
 
 export interface ChatGPTMessage {
