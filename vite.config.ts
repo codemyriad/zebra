@@ -19,6 +19,7 @@ export default defineConfig({
         content_claude: resolve(__dirname, "src/content/claude.ts"),
         options: resolve(__dirname, "src/options/options.html"),
         app: resolve(__dirname, "src/app.css"),
+        offscreen_document: resolve(__dirname, "src/offscreen/index.ts"),
       },
       output: {
         entryFileNames: `assets/[name].js`,

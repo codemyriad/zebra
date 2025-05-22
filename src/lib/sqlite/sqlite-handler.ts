@@ -1,4 +1,5 @@
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
+import type { Conversation } from "../types/content";
 
 // Database interface for our application
 export interface SqliteDb {
@@ -58,7 +59,7 @@ END;
   ON "conversations" ("source", "title", "created_at");
 
   -- Trigger for INSERT
-  CREATE TRIGGER ensure_content_json_insert
+  CREATE TRIGGER IF NOT EXISTS ensure_content_json_insert
   BEFORE INSERT ON conversations
   FOR EACH ROW
   WHEN json_valid(NEW.content, 6) <> 1
@@ -67,7 +68,7 @@ END;
   END;
 
   -- Trigger for UPDATE of content
-  CREATE TRIGGER ensure_content_json_update
+  CREATE TRIGGER IF NOT EXISTS ensure_content_json_update
   BEFORE UPDATE OF content ON conversations
   FOR EACH ROW
   WHEN json_valid(NEW.content, 6) <> 1
@@ -106,6 +107,9 @@ async function initDirectSqlite(): Promise<SqliteDb | null> {
 
   try {
     // Check if OPFS is available
+    if (sqlite3.capi.sqlite3_vfs_find("opfs")) {
+      console.log("... OPFS VFS is available ...");
+    }
     const db =
       "opfs" in sqlite3
         ? new sqlite3.oo1.OpfsDb("/conversations.db")
@@ -230,6 +234,45 @@ export async function saveConversation(
   });
 }
 
+export async function saveConversations(
+  db: SqliteDb,
+  conversations: Conversation[],
+): Promise<boolean> {
+  return executeWithTransaction(db, async (exec) => {
+    for (const conversation of conversations) {
+      // Prepare content from messages if needed
+      let content = conversation.content;
+      if (!content && conversation.messages) {
+        // content = conversation.messages
+        //   .map((msg: any) => `${msg.author}: ${msg.content}`)
+        //   .join("\n\n");
+        content = JSON.stringify(conversation.messages);
+      }
+      console.log({ content });
+
+      await exec(
+        `
+      INSERT OR REPLACE INTO conversations (
+        id, source, title, created_at, updated_at,
+        url, meta, tags, content
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `,
+        [
+          conversation.id,
+          conversation.source,
+          conversation.title,
+          conversation.created_at,
+          conversation.updated_at,
+          conversation.url || null,
+          conversation.meta || null,
+          conversation.tags || null,
+          content,
+        ],
+      );
+    }
+  });
+}
+
 // Get all conversations from the database
 export async function getConversations(db: SqliteDb): Promise<any[]> {
   try {
@@ -252,7 +295,7 @@ export async function getConversations(db: SqliteDb): Promise<any[]> {
     }
     console.log({ rows });
 
-    return rows.map((row: any) => ({
+    return rows.result.resultRows.map((row: any) => ({
       id: row[0],
       source: row[1],
       title: row[2],
