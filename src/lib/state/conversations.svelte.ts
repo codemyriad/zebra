@@ -11,10 +11,19 @@ export let selectedConversation = $state<Conversation>({
   source: "",
 });
 
+let activeSearchQuery = $state("");
+let searchOffset = $state(0);
+let searchIsLoading = $state(false);
+let searchHasMore = $state(true);
+const SEARCH_PAGE_SIZE = 10; // Or your desired page size for search results
+
 let currentOffset = $state(0);
 let isLoading = $state(false);
 let hasMoreConversationsToLoad = $state(true);
 
+export function getActiveSearchQuery() {
+  return activeSearchQuery;
+}
 export function getIsLoading() {
   return isLoading;
 }
@@ -40,6 +49,148 @@ export function getSelectedConversation() {
 }
 export async function getConversationsResult() {
   return conversationsResult;
+}
+
+export function getIsSearchLoading() {
+  return searchIsLoading;
+}
+export function getSearchHasMore() {
+  return searchHasMore;
+}
+// --- New functions for search pagination ---
+export async function executeNewSearch(query: string) {
+  if (!query.trim()) {
+    conversationsResult.length = 0;
+    activeSearchQuery = "";
+    searchOffset = 0;
+    searchHasMore = true; // Reset, or false if query is empty
+    if (selectedConversation.id && conversationsResult.length === 0) {
+      // Optionally clear selectedConversation if no search results
+      // setSelectedConversation({ id: "", title: "", created_at: 0, updated_at: 0, messages: [], source: "" });
+    }
+    return;
+  }
+
+  searchIsLoading = true;
+  activeSearchQuery = query;
+  searchOffset = 0;
+  conversationsResult.length = 0; // Clear previous results for a new search
+  searchHasMore = true; // Assume there might be results
+
+  return new Promise<void>((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        type: "EXECUTE_QUERY",
+        sql: `
+SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
+c.meta, c.tags, c.content
+FROM conversations c
+JOIN conversations_fts_idx fts ON c.id =
+fts.rowid_original_conversations
+WHERE conversations_fts_idx MATCH ?
+ORDER BY rank
+LIMIT ? OFFSET ?
+`,
+        params: [activeSearchQuery, SEARCH_PAGE_SIZE, searchOffset],
+      },
+      (response) => {
+        searchIsLoading = false;
+        if (
+          response.success &&
+          response.result &&
+          response.result.result &&
+          response.result.result.resultRows
+        ) {
+          const newItems = response.result.result.resultRows.map(
+            (row: any) => ({
+              id: row[0],
+              source: row[1],
+              title: row[2],
+              created_at: row[3],
+              updated_at: row[4],
+              url: row[5],
+              meta: row[6],
+              tags: row[7],
+              messages: JSON.parse(row[8]),
+            }),
+          );
+          for (const conv of newItems) {
+            conversationsResult.push(conv);
+          }
+          searchOffset += newItems.length;
+          searchHasMore = newItems.length === SEARCH_PAGE_SIZE;
+          resolve();
+        } else {
+          const errorMsg =
+            response?.error || "Unknown error executing new search";
+          console.error("Failed to execute new search.", errorMsg);
+          searchHasMore = false; // Stop trying to load more on error
+          reject(new Error(errorMsg));
+        }
+      },
+    );
+  });
+}
+
+export async function loadMoreSearchResults() {
+  if (searchIsLoading || !searchHasMore || !activeSearchQuery) {
+    return;
+  }
+  searchIsLoading = true;
+
+  return new Promise<void>((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        type: "EXECUTE_QUERY",
+        sql: `
+SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
+c.meta, c.tags, c.content
+FROM conversations c
+JOIN conversations_fts_idx fts ON c.id =
+fts.rowid_original_conversations
+WHERE conversations_fts_idx MATCH ?
+ORDER BY rank
+LIMIT ? OFFSET ?
+`,
+        params: [activeSearchQuery, SEARCH_PAGE_SIZE, searchOffset],
+      },
+      (response) => {
+        searchIsLoading = false;
+        if (
+          response.success &&
+          response.result &&
+          response.result.result &&
+          response.result.result.resultRows
+        ) {
+          const newItems = response.result.result.resultRows.map(
+            (row: any) => ({
+              id: row[0],
+              source: row[1],
+              title: row[2],
+              created_at: row[3],
+              updated_at: row[4],
+              url: row[5],
+              meta: row[6],
+              tags: row[7],
+              messages: JSON.parse(row[8]),
+            }),
+          );
+          for (const conv of newItems) {
+            conversationsResult.push(conv);
+          }
+          searchOffset += newItems.length;
+          searchHasMore = newItems.length === SEARCH_PAGE_SIZE;
+          resolve();
+        } else {
+          const errorMsg =
+            response?.error || "Unknown error loading more search results";
+          console.error("Failed to load more search results.", errorMsg);
+          searchHasMore = false; // Stop trying to load more on error
+          reject(new Error(errorMsg));
+        }
+      },
+    );
+  });
 }
 export async function setConversationsResult(
   searchQuery: string,
