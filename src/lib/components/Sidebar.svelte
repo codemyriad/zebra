@@ -17,7 +17,6 @@
 
     let {
         searchQuery,
-        // conversations prop is removed as we'll use the store directly
         selectedConversation,
     }: {
         searchQuery: string;

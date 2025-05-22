@@ -41,7 +41,11 @@ export function getSelectedConversation() {
 export async function getConversationsResult() {
   return conversationsResult;
 }
-export async function setConversationsResult(searchQuery: string) {
+export async function setConversationsResult(
+  searchQuery: string,
+  limit?: number,
+  offset?: number,
+) {
   return new Promise<void>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
@@ -62,7 +66,7 @@ export async function setConversationsResult(searchQuery: string) {
           console.log("Query result:", response.result);
           conversationsResult.length = 0;
 
-          for (const row of response.result) {
+          for (const row of response.result.result.resultRows) {
             const conv = {
               id: row[0],
               source: row[1],
