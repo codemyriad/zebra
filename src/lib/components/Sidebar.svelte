@@ -8,19 +8,26 @@
         setSelectedConversation,
         setConversationsResult,
         getConversationsResult,
+        loadConversationsFromBackground,
+        getHasMoreConversationsToLoad,
+        conversations as allConversationsStore,
+        getIsLoading,
+        getCurrentOffset,
     } from "../state/conversations.svelte";
 
     let {
         searchQuery,
-        conversations = [],
+        // conversations prop is removed as we'll use the store directly
         selectedConversation,
     }: {
         searchQuery: string;
-        conversations: Conversation[];
         selectedConversation: Conversation | undefined;
     } = $props();
 
     let selectedSource = $state("all");
+    let conversationsLoading = getIsLoading();
+    let currentOffset = getCurrentOffset();
+    let hasMoreConversationsToLoad = getHasMoreConversationsToLoad();
 
     const sources = [
         { id: "all", name: "All", count: 0 },
@@ -28,10 +35,23 @@
         { id: "claude", name: "Claude", count: 0 },
     ];
 
+    // Initial load if no conversations and more are available
+    if (allConversationsStore.length === 0 && hasMoreConversationsToLoad) {
+        loadConversationsFromBackground();
+    }
+
+    function handleLoadMore() {
+        console.log(conversationsLoading, hasMoreConversationsToLoad);
+        if (!conversationsLoading && hasMoreConversationsToLoad) {
+            loadConversationsFromBackground();
+        }
+    }
+
     async function handleSearch(event: Event) {
         if (event instanceof KeyboardEvent && event.key === "Enter") {
             setConversationsResult(searchQuery);
             const convResult = await getConversationsResult();
+            // This is already async
             if (convResult.length) {
                 setSelectedConversation(convResult[0]);
             }
@@ -55,7 +75,8 @@
     ></label>
 
     <div
-        class="menu p-4 w-80 bg-base text-base-content border-r flex flex-col gap-y-8 bg-base-100"
+        class="menu p-4 w-80 bg-base text-base-content border-r flex flex-col
+gap-y-8 bg-base-100"
     >
         <!-- Sidebar content here -->
         <div class="flex items-center">
@@ -113,10 +134,13 @@
                 </div>
             {:else}
                 <ul class="space-y-2">
-                    {#each conversationsResult as conversation}
+                    {#each conversationsResult as conversation (conversation.id)}
                         <li>
                             <button
-                                class="block p-2 hover:bg-base-300 rounded-lg"
+                                class="block p-2 hover:bg-base-300 rounded-lg
+w-full text-left"
+                                class:bg-base-200={conversation.id ===
+                                    selectedConversation?.id}
                                 onclick={() =>
                                     setSelectedConversation(conversation)}
                             >
@@ -128,19 +152,26 @@
             {/if}
         </div>
         <!-- Conversation List -->
-        <div class="grow">
+        <div class="grow overflow-y-auto">
             <h3 class="font-medium mb-2">All Conversations</h3>
-            {#if conversations.length === 0}
+            {#if allConversationsStore.length === 0 && !conversationsLoading && !hasMoreConversationsToLoad}
                 <div class="text-sm opacity-70 p-4 text-center">
-                    No conversations found
+                    No conversations found. Try importing some.
+                </div>
+            {:else if allConversationsStore.length === 0 && conversationsLoading}
+                <div class="text-sm opacity-70 p-4 text-center">
+                    Loading conversations...
                 </div>
             {:else}
                 <ul class="space-y-2">
-                    {#each conversations as conversation}
+                    {#each allConversationsStore as conversation (conversation.id)}
                         {#if selectedSource === "all" || conversation.source.toLowerCase() === selectedSource}
                             <li>
                                 <button
-                                    class={`block p-2 hover:bg-base-300 rounded-lg ${conversation.id === selectedConversation?.id ? "bg-base-200" : ""}`}
+                                    class="block p-2 hover:bg-base-300
+rounded-lg w-full text-left"
+                                    class:bg-base-200={conversation.id ===
+                                        selectedConversation?.id}
                                     onclick={() =>
                                         setSelectedConversation(conversation)}
                                 >
@@ -150,6 +181,24 @@
                         {/if}
                     {/each}
                 </ul>
+                {#if conversationsLoading}
+                    <div class="text-sm opacity-70 p-4 text-center">
+                        Loading more...
+                    </div>
+                {/if}
+                {#if hasMoreConversationsToLoad && !conversationsLoading}
+                    <button
+                        class="btn btn-sm btn-outline w-full mt-2"
+                        onclick={handleLoadMore}
+                    >
+                        Show more...
+                    </button>
+                {/if}
+                {#if !hasMoreConversationsToLoad && allConversationsStore.length > 0}
+                    <div class="text-sm opacity-70 p-4 text-center">
+                        No more conversations.
+                    </div>
+                {/if}
             {/if}
         </div>
 

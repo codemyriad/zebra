@@ -24,6 +24,10 @@
         chrome.runtime.sendMessage(
             {
                 type: "GET_CONVERSATIONS",
+                payload: {
+                    limit: 50,
+                    offset: 0,
+                },
             },
             async (response) => {
                 console.log({ response });
