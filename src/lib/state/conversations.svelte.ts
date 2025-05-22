@@ -1,5 +1,4 @@
-import type { Conversation } from "../types/content"; // Adjust path to your
-
+import type { Conversation } from "../types/content";
 export let conversations = $state<Conversation[]>([]);
 export let conversationsResult = $state<Conversation[]>([]);
 
@@ -11,6 +10,31 @@ export let selectedConversation = $state<Conversation>({
   messages: [],
   source: "",
 });
+
+let activeSearchQuery = $state("");
+let searchOffset = $state(0);
+let searchIsLoading = $state(false);
+let searchHasMore = $state(true);
+const SEARCH_PAGE_SIZE = 10; // Or your desired page size for search results
+
+let currentOffset = $state(0);
+let isLoading = $state(false);
+let hasMoreConversationsToLoad = $state(true);
+
+export function getActiveSearchQuery() {
+  return activeSearchQuery;
+}
+export function getIsLoading() {
+  return isLoading;
+}
+
+export function getCurrentOffset() {
+  return currentOffset;
+}
+
+export function getHasMoreConversationsToLoad() {
+  return hasMoreConversationsToLoad;
+}
 
 export function setSelectedConversation(conversation: Conversation) {
   selectedConversation.created_at = conversation.created_at;
@@ -26,7 +50,153 @@ export function getSelectedConversation() {
 export async function getConversationsResult() {
   return conversationsResult;
 }
-export async function setConversationsResult(searchQuery: string) {
+
+export function getIsSearchLoading() {
+  return searchIsLoading;
+}
+export function getSearchHasMore() {
+  return searchHasMore;
+}
+// --- New functions for search pagination ---
+export async function executeNewSearch(query: string) {
+  if (!query.trim()) {
+    conversationsResult.length = 0;
+    activeSearchQuery = "";
+    searchOffset = 0;
+    searchHasMore = true; // Reset, or false if query is empty
+    if (selectedConversation.id && conversationsResult.length === 0) {
+      // Optionally clear selectedConversation if no search results
+      // setSelectedConversation({ id: "", title: "", created_at: 0, updated_at: 0, messages: [], source: "" });
+    }
+    return;
+  }
+
+  searchIsLoading = true;
+  activeSearchQuery = query;
+  searchOffset = 0;
+  conversationsResult.length = 0; // Clear previous results for a new search
+  searchHasMore = true; // Assume there might be results
+
+  return new Promise<void>((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        type: "EXECUTE_QUERY",
+        sql: `
+SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
+c.meta, c.tags, c.content
+FROM conversations c
+JOIN conversations_fts_idx fts ON c.id =
+fts.rowid_original_conversations
+WHERE conversations_fts_idx MATCH ?
+ORDER BY rank
+LIMIT ? OFFSET ?
+`,
+        params: [activeSearchQuery, SEARCH_PAGE_SIZE, searchOffset],
+      },
+      (response) => {
+        searchIsLoading = false;
+        if (
+          response.success &&
+          response.result &&
+          response.result.result &&
+          response.result.result.resultRows
+        ) {
+          const newItems = response.result.result.resultRows.map(
+            (row: any) => ({
+              id: row[0],
+              source: row[1],
+              title: row[2],
+              created_at: row[3],
+              updated_at: row[4],
+              url: row[5],
+              meta: row[6],
+              tags: row[7],
+              messages: JSON.parse(row[8]),
+            }),
+          );
+          for (const conv of newItems) {
+            conversationsResult.push(conv);
+          }
+          searchOffset += newItems.length;
+          searchHasMore = newItems.length === SEARCH_PAGE_SIZE;
+          resolve();
+        } else {
+          const errorMsg =
+            response?.error || "Unknown error executing new search";
+          console.error("Failed to execute new search.", errorMsg);
+          searchHasMore = false; // Stop trying to load more on error
+          reject(new Error(errorMsg));
+        }
+      },
+    );
+  });
+}
+
+export async function loadMoreSearchResults() {
+  if (searchIsLoading || !searchHasMore || !activeSearchQuery) {
+    return;
+  }
+  searchIsLoading = true;
+
+  return new Promise<void>((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        type: "EXECUTE_QUERY",
+        sql: `
+SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
+c.meta, c.tags, c.content
+FROM conversations c
+JOIN conversations_fts_idx fts ON c.id =
+fts.rowid_original_conversations
+WHERE conversations_fts_idx MATCH ?
+ORDER BY rank
+LIMIT ? OFFSET ?
+`,
+        params: [activeSearchQuery, SEARCH_PAGE_SIZE, searchOffset],
+      },
+      (response) => {
+        searchIsLoading = false;
+        if (
+          response.success &&
+          response.result &&
+          response.result.result &&
+          response.result.result.resultRows
+        ) {
+          const newItems = response.result.result.resultRows.map(
+            (row: any) => ({
+              id: row[0],
+              source: row[1],
+              title: row[2],
+              created_at: row[3],
+              updated_at: row[4],
+              url: row[5],
+              meta: row[6],
+              tags: row[7],
+              messages: JSON.parse(row[8]),
+            }),
+          );
+          for (const conv of newItems) {
+            conversationsResult.push(conv);
+          }
+          searchOffset += newItems.length;
+          searchHasMore = newItems.length === SEARCH_PAGE_SIZE;
+          resolve();
+        } else {
+          const errorMsg =
+            response?.error || "Unknown error loading more search results";
+          console.error("Failed to load more search results.", errorMsg);
+          searchHasMore = false; // Stop trying to load more on error
+          reject(new Error(errorMsg));
+        }
+      },
+    );
+  });
+}
+export async function setConversationsResult(
+  searchQuery: string,
+  limit?: number,
+  offset?: number,
+) {
   return new Promise<void>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
@@ -47,7 +217,7 @@ export async function setConversationsResult(searchQuery: string) {
           console.log("Query result:", response.result);
           conversationsResult.length = 0;
 
-          for (const row of response.result) {
+          for (const row of response.result.result.resultRows) {
             const conv = {
               id: row[0],
               source: row[1],
@@ -79,38 +249,70 @@ export async function setConversationsResult(searchQuery: string) {
 // Function to load conversations from the background script
 // and update the shared 'conversations' state.
 export async function loadConversationsFromBackground() {
-  console.log("Shared Rune State: Requesting conversations from background...");
+  if (isLoading || !hasMoreConversationsToLoad) {
+    console.log(
+      "Shared Rune State: Already loading or no more conversations toload.",
+    );
+    return;
+  }
+
+  isLoading = true;
+  console.log(`Shared Rune State: Requesting conversations from background
+(offset: ${currentOffset})...`);
   return new Promise<void>((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: "GET_CONVERSATIONS" }, (response) => {
-      if (response && response.success) {
-        conversations.length = 0;
-        setSelectedConversation(response.conversations[0]);
-        for (const conv of response.conversations) {
-          conversations.push(conv);
+    chrome.runtime.sendMessage(
+      {
+        type: "GET_CONVERSATIONS",
+        payload: { limit: 50, offset: currentOffset },
+      },
+      (response) => {
+        isLoading = false;
+        if (response && response.success) {
+          // conversations.length = 0; // REMOVED: Do not clear for incremental loading
+
+          if (response.conversations && response.conversations.length > 0) {
+            // Select the first conversation only on the very first load if nothing is selected
+            if (
+              currentOffset === 0 &&
+              conversations.length === 0 &&
+              !selectedConversation.id
+            ) {
+              setSelectedConversation(response.conversations[0]);
+            }
+            for (const conv of response.conversations) {
+              conversations.push(conv); // APPEND new conversations
+            }
+            currentOffset += response.conversations.length; // Update offset
+
+            if (response.conversations.length < 50) {
+              // Fewer than limit means no more
+              hasMoreConversationsToLoad = false;
+            }
+          } else {
+            // No conversations returned, so no more to load
+            hasMoreConversationsToLoad = false;
+          }
+
+          console.log(
+            "Shared Rune State: Conversations loaded/appended and state updated.",
+          );
+          resolve();
+        } else {
+          const errorMsg =
+            response?.error || "Unknown error loading conversations";
+          console.error(
+            "Shared Rune State: Failed to load conversations.",
+            errorMsg,
+          );
+          reject(new Error(errorMsg));
         }
-
-        console.log(
-          "Shared Rune State: Conversations loaded and state updated.",
-          conversations,
-        );
-        resolve();
-      } else {
-        const errorMsg =
-          response?.error || "Unknown error loading  conversations";
-        console.error(
-          "Shared Rune State: Failed to load conversations.",
-          errorMsg,
-        );
-
-        reject(new Error(errorMsg));
-      }
-    });
+      },
+    );
   });
 }
 
 export async function addNewConversationsAndRefresh(
-  newConversationData: Conversation[] /*
-Adjust type as needed */,
+  newConversationData: Conversation[],
 ) {
   return new Promise<void>((resolve, reject) =>
     chrome.runtime.sendMessage(
@@ -132,5 +334,12 @@ Adjust type as needed */,
         }
       },
     ),
-  ).then(loadConversationsFromBackground);
+  ).then(() => {
+    // Reset state for a full refresh
+    conversations.length = 0;
+    currentOffset = 0;
+    hasMoreConversationsToLoad = true;
+    isLoading = false; // Ensure isLoading is reset
+    return loadConversationsFromBackground();
+  });
 }
