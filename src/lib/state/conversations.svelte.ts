@@ -1,5 +1,4 @@
-import type { Conversation } from "../types/content"; // Adjust path to your
-
+import type { Conversation } from "../types/content";
 export let conversations = $state<Conversation[]>([]);
 export let conversationsResult = $state<Conversation[]>([]);
 
@@ -11,6 +10,22 @@ export let selectedConversation = $state<Conversation>({
   messages: [],
   source: "",
 });
+
+let currentOffset = $state(0);
+let isLoading = $state(false);
+let hasMoreConversationsToLoad = $state(true);
+
+export function getIsLoading() {
+  return isLoading;
+}
+
+export function getCurrentOffset() {
+  return currentOffset;
+}
+
+export function getHasMoreConversationsToLoad() {
+  return hasMoreConversationsToLoad;
+}
 
 export function setSelectedConversation(conversation: Conversation) {
   selectedConversation.created_at = conversation.created_at;
@@ -79,38 +94,70 @@ export async function setConversationsResult(searchQuery: string) {
 // Function to load conversations from the background script
 // and update the shared 'conversations' state.
 export async function loadConversationsFromBackground() {
-  console.log("Shared Rune State: Requesting conversations from background...");
+  if (isLoading || !hasMoreConversationsToLoad) {
+    console.log(
+      "Shared Rune State: Already loading or no more conversations toload.",
+    );
+    return;
+  }
+
+  isLoading = true;
+  console.log(`Shared Rune State: Requesting conversations from background
+(offset: ${currentOffset})...`);
   return new Promise<void>((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: "GET_CONVERSATIONS" }, (response) => {
-      if (response && response.success) {
-        conversations.length = 0;
-        setSelectedConversation(response.conversations[0]);
-        for (const conv of response.conversations) {
-          conversations.push(conv);
+    chrome.runtime.sendMessage(
+      {
+        type: "GET_CONVERSATIONS",
+        payload: { limit: 50, offset: currentOffset },
+      },
+      (response) => {
+        isLoading = false;
+        if (response && response.success) {
+          // conversations.length = 0; // REMOVED: Do not clear for incremental loading
+
+          if (response.conversations && response.conversations.length > 0) {
+            // Select the first conversation only on the very first load if nothing is selected
+            if (
+              currentOffset === 0 &&
+              conversations.length === 0 &&
+              !selectedConversation.id
+            ) {
+              setSelectedConversation(response.conversations[0]);
+            }
+            for (const conv of response.conversations) {
+              conversations.push(conv); // APPEND new conversations
+            }
+            currentOffset += response.conversations.length; // Update offset
+
+            if (response.conversations.length < 50) {
+              // Fewer than limit means no more
+              hasMoreConversationsToLoad = false;
+            }
+          } else {
+            // No conversations returned, so no more to load
+            hasMoreConversationsToLoad = false;
+          }
+
+          console.log(
+            "Shared Rune State: Conversations loaded/appended and state updated.",
+          );
+          resolve();
+        } else {
+          const errorMsg =
+            response?.error || "Unknown error loading conversations";
+          console.error(
+            "Shared Rune State: Failed to load conversations.",
+            errorMsg,
+          );
+          reject(new Error(errorMsg));
         }
-
-        console.log(
-          "Shared Rune State: Conversations loaded and state updated.",
-          conversations,
-        );
-        resolve();
-      } else {
-        const errorMsg =
-          response?.error || "Unknown error loading  conversations";
-        console.error(
-          "Shared Rune State: Failed to load conversations.",
-          errorMsg,
-        );
-
-        reject(new Error(errorMsg));
-      }
-    });
+      },
+    );
   });
 }
 
 export async function addNewConversationsAndRefresh(
-  newConversationData: Conversation[] /*
-Adjust type as needed */,
+  newConversationData: Conversation[],
 ) {
   return new Promise<void>((resolve, reject) =>
     chrome.runtime.sendMessage(
@@ -132,5 +179,12 @@ Adjust type as needed */,
         }
       },
     ),
-  ).then(loadConversationsFromBackground);
+  ).then(() => {
+    // Reset state for a full refresh
+    conversations.length = 0;
+    currentOffset = 0;
+    hasMoreConversationsToLoad = true;
+    isLoading = false; // Ensure isLoading is reset
+    return loadConversationsFromBackground();
+  });
 }
