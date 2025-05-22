@@ -91,5 +91,5 @@
         </div>
     </div>
 
-    <Sidebar {searchQuery} {conversations} {selectedConversation} />
+    <Sidebar {searchQuery} {selectedConversation} />
 </div>

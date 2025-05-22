@@ -13,7 +13,12 @@
         conversations as allConversationsStore,
         getIsLoading,
         getCurrentOffset,
+        executeNewSearch,
+        loadMoreSearchResults,
+        getIsSearchLoading,
+        getSearchHasMore,
     } from "../state/conversations.svelte";
+    import { get } from "svelte/store";
 
     let {
         searchQuery,
@@ -27,6 +32,9 @@
     let conversationsLoading = getIsLoading();
     let currentOffset = getCurrentOffset();
     let hasMoreConversationsToLoad = getHasMoreConversationsToLoad();
+
+    let searchIsLoading = getIsSearchLoading();
+    let searchHasMore = getSearchHasMore();
 
     const sources = [
         { id: "all", name: "All", count: 0 },
@@ -48,14 +56,18 @@
 
     async function handleSearch(event: Event) {
         if (event instanceof KeyboardEvent && event.key === "Enter") {
-            setConversationsResult(searchQuery);
-            const convResult = await getConversationsResult();
-            // This is already async
-            if (convResult.length) {
-                setSelectedConversation(convResult[0]);
+            await executeNewSearch(searchQuery);
+            // conversationsResult is updated reactively
+            if (conversationsResult.length > 0) {
+                setSelectedConversation(conversationsResult[0]);
             }
+            // console.log(`Searching for: ${searchQuery}`); // Logging can be inside executeNewSearch
+        }
+    }
 
-            console.log(`Searching for: ${searchQuery}`);
+    function handleLoadMoreSearchResultsClick() {
+        if (!searchIsLoading && searchHasMore) {
+            loadMoreSearchResults();
         }
     }
 
@@ -125,11 +137,15 @@ gap-y-8 bg-base-100"
         </div>
 
         <!-- Search Result Conversation List -->
-        <div class="grow">
+        <div class="grow overflow-y-auto">
             <h3 class="font-medium mb-2">Search Result</h3>
-            {#if conversationsResult.length === 0}
+            {#if conversationsResult.length === 0 && !searchIsLoading}
                 <div class="text-sm opacity-70 p-4 text-center">
                     Search for a keyword in the search bar above...
+                </div>
+            {:else if conversationsResult.length === 0 && searchIsLoading}
+                <div class="text-sm opacity-70 p-4 text-center">
+                    Searching...
                 </div>
             {:else}
                 <ul class="space-y-2">
@@ -137,7 +153,7 @@ gap-y-8 bg-base-100"
                         <li>
                             <button
                                 class="block p-2 hover:bg-base-300 rounded-lg
-w-full text-left"
+      w-full text-left"
                                 class:bg-base-200={conversation.id ===
                                     selectedConversation?.id}
                                 onclick={() =>
@@ -148,6 +164,24 @@ w-full text-left"
                         </li>
                     {/each}
                 </ul>
+                {#if searchIsLoading && conversationsResult.length > 0}
+                    <div class="text-sm opacity-70 p-4 text-center">
+                        Loading more results...
+                    </div>
+                {/if}
+                {#if searchHasMore && !searchIsLoading && conversationsResult.length > 0}
+                    <button
+                        class="btn btn-sm btn-outline w-full mt-2"
+                        onclick={handleLoadMoreSearchResultsClick}
+                    >
+                        Load More Results
+                    </button>
+                {/if}
+                {#if !searchHasMore && conversationsResult.length > 0 && !searchIsLoading}
+                    <div class="text-sm opacity-70 p-4 text-center">
+                        No more search results.
+                    </div>
+                {/if}
             {/if}
         </div>
         <!-- Conversation List -->
