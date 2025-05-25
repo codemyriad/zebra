@@ -273,21 +273,34 @@ export async function saveConversations(
   });
 }
 
-// Get all conversations from the database
-export async function getConversations(db: SqliteDb): Promise<any[]> {
+// Get conversations from the database
+export async function getConversations(
+  db: SqliteDb,
+  limit: number,
+  offset: number,
+): Promise<any[]> {
   try {
     let rows;
-    console.log({ db });
+
+    const sql = `
+      SELECT id, source, title, created_at, updated_at, url, meta, tags, content
+      FROM conversations
+      ORDER BY updated_at DESC
+      LIMIT ? OFFSET ?;
+    `;
+    const bindParams = [limit, offset];
 
     if (db.db) {
       rows = db.db.exec({
-        sql: "SELECT id, source, title, created_at, updated_at, url, meta, tags, content FROM conversations ORDER BY updated_at DESC;",
+        sql,
+        bind: bindParams,
         returnValue: "resultRows",
       });
     } else if (db.promiser && db.dbId) {
       rows = await db.promiser("exec", {
         dbId: db.dbId,
-        sql: "SELECT id, source, title, created_at, updated_at, url, meta, tags, content FROM conversations ORDER BY updated_at DESC;",
+        sql,
+        bind: bindParams,
         returnValue: "resultRows",
       });
     } else {

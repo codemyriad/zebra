@@ -71,8 +71,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const result = await saveConversations(sqliteDb!, req.conversations);
       return { result };
     },
-    GET_CONVERSATIONS: async () => {
-      const conversations = await getConversations(sqliteDb!);
+    GET_CONVERSATIONS: async (req) => {
+      const conversations = await getConversations(
+        sqliteDb!,
+        req.payload.limit,
+        req.payload.offset,
+      );
       return { conversations };
     },
     GET_CONVERSATION: async (req) => {
