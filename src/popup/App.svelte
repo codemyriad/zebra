@@ -93,22 +93,67 @@
 
     <button
         class="btn btn-outline btn-primary w-full"
-        onclick={() => {
-            chrome.runtime.sendMessage(
-                {
-                    action: "download_conversation_history",
-                },
-                (response) => {
-                    if (response.success) {
-                        console.log("Conversation downloaded successfully");
+        onclick={async () => {
+            try {
+                const [activeTab] = await chrome.tabs.query({
+                    active: true,
+                    currentWindow: true,
+                });
+
+                if (activeTab && activeTab.id) {
+                    const responseFromContentScript =
+                        await chrome.tabs.sendMessage(activeTab.id, {
+                            action: "get_localStorage_token",
+                            key: "userToken",
+                        });
+
+                    if (
+                        responseFromContentScript &&
+                        responseFromContentScript.token !== undefined
+                    ) {
+                        const userToken = responseFromContentScript.token;
+                        chrome.runtime.sendMessage(
+                            {
+                                action: "download_conversation_history",
+                                token: JSON.parse(userToken).value,
+                            },
+                            (responseFromBackground) => {
+                                if (
+                                    responseFromBackground &&
+                                    responseFromBackground.success
+                                ) {
+                                    console.log(
+                                        "Conversation downloaded successfully",
+                                    );
+                                } else {
+                                    console.error(
+                                        "Failed to download conversation:",
+                                        responseFromBackground?.error,
+                                    );
+                                }
+                            },
+                        );
                     } else {
                         console.error(
-                            "Failed to download conversation:",
-                            response.error,
+                            "Could not retrieve token from active tab's localStorage. Response:",
+                            responseFromContentScript,
                         );
                     }
-                },
-            );
+                } else {
+                    console.error("Could not get active tab.");
+                }
+            } catch (error) {
+                console.error("Error getting token from active tab:", error);
+                // This error often means the content script isn't injected or  didn't respond.
+                if (
+                    error.message.includes("Could not establish connection") ||
+                    error.message.includes("No matching signature")
+                ) {
+                    console.warn(
+                        "Ensure a content script is running on the active tab and listening for 'get_localStorage_token'.",
+                    );
+                }
+            }
         }}
     >
         Sync conversations
