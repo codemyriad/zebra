@@ -1,4 +1,6 @@
 import { getConversationHistory } from "../lib/chatgpt";
+import { getConversationHistory as getConversationHistoryFromDeepseek } from "../lib/deepseek";
+
 import { addNewConversationsAndRefresh } from "../lib/state/conversations.svelte";
 
 console.log("Zebra Background Service Worker Started.");
@@ -75,8 +77,9 @@ chrome.action.onClicked.addListener(async () => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "download_conversation_history") {
     console.log("download_conversation_history RECIEVED");
-    getConversationHistory()
+    getConversationHistoryFromDeepseek(request.token)
       .then(async (res) => {
+        console.log("DONE");
         await addNewConversationsAndRefresh(res);
         console.log({ res });
         sendResponse({ status: "success", data: res });
