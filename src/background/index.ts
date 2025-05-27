@@ -1,3 +1,6 @@
+import { getConversationHistory } from "../lib/chatgpt";
+import { addNewConversationsAndRefresh } from "../lib/state/conversations.svelte";
+
 console.log("Zebra Background Service Worker Started.");
 
 const OFFSCREEN_DOCUMENT_PATH = "offscreen.html";
@@ -67,4 +70,20 @@ chrome.action.onClicked.addListener(async () => {
   console.log(
     "Background: Action clicked, ensured offscreen document is set up.",
   );
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "download_conversation_history") {
+    console.log("download_conversation_history RECIEVED");
+    getConversationHistory()
+      .then(async (res) => {
+        await addNewConversationsAndRefresh(res);
+        console.log({ res });
+        sendResponse({ status: "success", data: res });
+      })
+      .catch((error) => {
+        sendResponse({ status: "error", error: error.message });
+      });
+    return true; // Indicate that the response will be sent asynchronously
+  }
 });
