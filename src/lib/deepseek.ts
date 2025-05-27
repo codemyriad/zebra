@@ -1,12 +1,23 @@
 import type { Conversation, Message } from "./types/content";
 
-// Session token
-export async function getSessionToken(tabId: string): Promise<string> {
-  const accessToken = localStorage.getItem("userToken");
-  console.log({ accessToken });
-  return accessToken;
-}
+// Messages
+type ConversationRaw = {
+  mapping: Record<string, MessageItemRaw>;
+};
 
+type MessageItemRaw = {
+  message: MessageContentRaw | null;
+};
+
+type MessageContentRaw = {
+  create_time: number;
+  author: {
+    role: "user" | "assistant" | "system";
+  };
+  content: {
+    parts: string[];
+  };
+};
 interface ChatSessionMultiple {
   id: string;
   seq_id: number;
@@ -29,7 +40,7 @@ interface ChatSession {
 }
 
 interface BizDataMultiple {
-  chat_sessions: ChatSessionMultiple[];
+  chat_sessions: ChatSession[];
   has_more: boolean;
 }
 
@@ -76,7 +87,6 @@ async function _fetchConversations(
     },
   );
 
-  console.log("deepseekRes multiple", await res.json());
   return res.json();
 }
 
@@ -84,86 +94,16 @@ async function _fetchConversation(
   sessionToken: string,
   sessionId: string,
 ): Promise<DeepSeekConversationResponse> {
-  try {
-    const res = await fetch(
-      `https://chat.deepseek.com/api/v0/chat/history_messages?chat_session_id=${sessionId}&cache_version=33`,
-      {
-        headers: {
-          authorization: `Bearer ${sessionToken}`,
-        },
-      },
-    );
-    console.log("deepseekRes single", await res.json());
-    return res.json();
-  } catch (e) {
-    console.log({ e });
-  }
-  return true;
-}
-
-async function getAllConversations(
-  sessionToken: string,
-): Promise<Omit<Conversation, "messages">[]> {
-  const {
-    data: {
-      biz_data: { chat_sessions },
-    },
-  } = await _fetchConversations(sessionToken);
-
-  console.log("HEREEEEEEE");
-  const first = await _fetchConversations(chat_sessions[0].id);
-  console.log({ first });
-  const res = await Promise.all(
-    chat_sessions.map((session, i) =>
-      _fetchConversation(sessionToken, session.id),
-    ),
-  );
-  // const items = res.flatMap(({ data }) => items);
-  console.log("All conversations:", { res });
-  return res;
-}
-
-// Messages
-type ConversationRaw = {
-  mapping: Record<string, MessageItemRaw>;
-};
-
-type MessageItemRaw = {
-  message: MessageContentRaw | null;
-};
-
-type MessageContentRaw = {
-  create_time: number;
-  author: {
-    role: "user" | "assistant" | "system";
-  };
-  content: {
-    parts: string[];
-  };
-};
-
-async function _fetchMessages(
-  sessionToken: string,
-  conversationId: string,
-): Promise<MessageContentRaw[]> {
   const res = await fetch(
-    `https://chatgpt.com/backend-api/conversation/${conversationId}`,
+    `https://chat.deepseek.com/api/v0/chat/history_messages?chat_session_id=${sessionId}&cache_version=33`,
     {
       headers: {
         authorization: `Bearer ${sessionToken}`,
       },
     },
   );
-  const json = (await res.json()) as ConversationRaw;
 
-  if (!json.mapping) {
-    console.log("No mapping found for conversation", conversationId);
-    return [];
-  }
-
-  return Object.values(json.mapping)
-    .map(({ message }) => message)
-    .filter(Boolean) as MessageContentRaw[];
+  return res.json();
 }
 
 function messageFilter(message: MessageContentRaw): boolean {
@@ -185,27 +125,64 @@ function processMessages(messages: MessageContentRaw[]): Message[] {
     .filter(({ content }) => Boolean(content));
 }
 
+/**Same as CHat Session */
+// type ConversationItemRaw = {
+//   id: string;
+//   title: string;
+//   create_time: number;
+//   update_time: number;
+// };
+function _pickFromConversation(
+  item: ChatSession,
+): Omit<Conversation, "messages"> {
+  return {
+    id: item.id,
+    title: item.title,
+    created_at: item.inserted_at,
+    updated_at: item.updated_at,
+    source: "deepseek",
+  };
+}
+
+function _processConversations(
+  items: ChatSession[],
+): Omit<Conversation, "messages">[] {
+  return items.map(_pickFromConversation);
+}
+async function getConversations(
+  sessionToken: string,
+): Promise<Omit<Conversation, "messages">[]> {
+  const {
+    data: {
+      biz_data: { chat_sessions },
+    },
+  } = await _fetchConversations(sessionToken); // One default call to get the total
+
+  return _processConversations(chat_sessions);
+}
+
 async function getMessages(
   sessionToken: string,
   conversationId: string,
 ): Promise<Message[]> {
-  const res = await _fetchMessages(sessionToken, conversationId);
-  return processMessages(res);
+  const {
+    data: {
+      biz_data: { chat_messages },
+    },
+  } = await _fetchConversation(sessionToken, conversationId);
+  return processMessages(chat_messages);
 }
 
 export async function getConversationHistory(
   token: string,
 ): Promise<Conversation[]> {
-  // const sessionToken = await getSessionToken(tabId);
-  console.log({ token });
-  const conversations = await getAllConversations(token);
+  const conversations = await getConversations(token);
 
   console.log({ conversations });
-  return conversations;
-  // return await Promise.all(
-  //   conversations.map(async (c) => ({
-  //     ...c,
-  //     messages: await getMessages(sessionToken, c.id),
-  //   })),
-  // );
+  return await Promise.all(
+    conversations.map(async (c) => ({
+      ...c,
+      messages: await getMessages(token, c.id),
+    })),
+  );
 }
