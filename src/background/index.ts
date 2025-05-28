@@ -3,11 +3,51 @@ import { getConversationHistory as getConversationHistoryFromDeepseek } from "..
 
 import { addNewConversationsAndRefresh } from "../lib/state/conversations.svelte";
 
-console.log("Zebra Background Service Worker Started.");
-
+// Import SQLite functions
+import {
+  initSqlite,
+  saveConversation,
+  getConversations,
+  getConversation,
+  deleteConversation,
+  executeQuery,
+} from "../lib/sqlite/sqlite-handler";
 const OFFSCREEN_DOCUMENT_PATH = "offscreen.html";
 
+console.log("Zebra Background Service Worker Started.");
+
+// Global database connection
+let sqliteDb = null;
 let creatingOffscreenDocument: Promise<void> | null = null;
+
+// Add a global function to execute SQL queries from the console
+(self as any).executeSQL = async (sql: string, params: any[] = []) => {
+  if (!sqliteDb) {
+    console.error("Database not initialized yet");
+    return null;
+  }
+  try {
+    const result = await executeQuery(sqliteDb, sql, params);
+    console.log("Query result:", result);
+    return result;
+  } catch (error) {
+    console.error("Error executing query:", error);
+    return null;
+  }
+};
+// Initialize SQLite when the service worker starts
+async function initializeDatabase() {
+  try {
+    console.log("Starting SQLite initialization...");
+    sqliteDb = await initSqlite();
+    console.log("SQLite initialized successfully");
+  } catch (error) {
+    console.error("Failed to initialize SQLite:", error);
+  }
+}
+
+// Start initialization
+initializeDatabase();
 
 async function hasOffscreenDocument(path: string): Promise<boolean> {
   const offscreenUrl = chrome.runtime.getURL(path);

@@ -35,6 +35,23 @@ let sqliteDb: SqliteDb | null = null;
 //     console.error("Offscreen: Failed to initialize SQLite:", error);
 //   }
 // }
+//
+
+// Add a global function to execute SQL queries from the console
+(self as any).executeSQL = async (sql: string, params: any[] = []) => {
+  if (!sqliteDb) {
+    console.error("Database not initialized yet");
+    return null;
+  }
+  try {
+    const result = await executeQuery(sqliteDb, sql, params);
+    console.log("Query result:", result);
+    return result;
+  } catch (error) {
+    console.error("Error executing query:", error);
+    return null;
+  }
+};
 async function initializeDatabase() {
   try {
     console.log("Starting SQLite initialization...");

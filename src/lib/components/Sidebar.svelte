@@ -40,6 +40,7 @@
         { id: "all", name: "All", count: 0 },
         { id: "chatgpt", name: "ChatGPT", count: 0 },
         { id: "claude", name: "Claude", count: 0 },
+        { id: "deepseek", name: "DeepSeek", count: 0 },
     ];
 
     // Initial load if no conversations and more are available
@@ -73,7 +74,7 @@
 
     function selectSource(sourceId: string) {
         selectedSource = sourceId;
-        // TODO: Filter conversations by source
+        console.log(allConversationsStore);
         console.log(`Selected source: ${sourceId}`);
     }
 </script>
@@ -138,7 +139,7 @@ gap-y-8 bg-base-100"
 
         <!-- Search Result Conversation List -->
         <div class="grow overflow-y-auto">
-            <h3 class="font-medium mb-2">Search Result</h3>
+            <h2 class="font-medium mb-2">Search Result</h2>
             {#if conversationsResult.length === 0 && !searchIsLoading}
                 <div class="text-sm opacity-70 p-4 text-center">
                     Search for a keyword in the search bar above...
@@ -186,7 +187,7 @@ gap-y-8 bg-base-100"
         </div>
         <!-- Conversation List -->
         <div class="grow overflow-y-auto">
-            <h3 class="font-medium mb-2">All Conversations</h3>
+            <h2 class="font-medium mb-2">All Conversations</h2>
             {#if allConversationsStore.length === 0 && !conversationsLoading && !hasMoreConversationsToLoad}
                 <div class="text-sm opacity-70 p-4 text-center">
                     No conversations found. Try importing some.
