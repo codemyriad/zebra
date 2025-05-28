@@ -10,13 +10,24 @@ type MessageItemRaw = {
 };
 
 type MessageContentRaw = {
-  create_time: number;
-  author: {
-    role: "user" | "assistant" | "system";
-  };
-  content: {
-    parts: string[];
-  };
+  message_id: number;
+  parent_id: number;
+  model: string;
+  role: "USER" | "ASSISTANT";
+  content: string;
+  thinking_enabled: boolean;
+  thinking_content: string | null;
+  thinking_elapsed_secs: number | null;
+  ban_edit: boolean;
+  ban_regenerate: boolean;
+  status: "FINISHED" | string;
+  accumulated_token_usage: number;
+  files: any[];
+  tips: any[];
+  inserted_at: number;
+  search_enabled: boolean;
+  search_status: string | null;
+  search_results: any | null;
 };
 interface ChatSessionMultiple {
   id: string;
@@ -107,14 +118,14 @@ async function _fetchConversation(
 }
 
 function messageFilter(message: MessageContentRaw): boolean {
-  return ["user", "assistant"].includes(message?.author?.role);
+  return ["USER", "ASSISTANT"].includes(message?.role);
 }
 
 function pickFromMessage(message: MessageContentRaw): Message {
   return {
-    created_at: message.create_time,
-    author: message.author.role as "user" | "assistant",
-    content: message.content.parts?.join("\n") || "",
+    created_at: message.inserted_at,
+    author: message.role.toLowerCase() as "user" | "assistant",
+    content: message.content,
   };
 }
 
@@ -170,6 +181,7 @@ async function getMessages(
       biz_data: { chat_messages },
     },
   } = await _fetchConversation(sessionToken, conversationId);
+  console.log({ chat_messages });
   return processMessages(chat_messages);
 }
 
