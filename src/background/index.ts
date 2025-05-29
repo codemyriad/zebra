@@ -1,4 +1,4 @@
-import { getConversationHistory } from "../lib/chatgpt";
+import { getConversationHistory as getConversationHistoryFromChatGPT } from "../lib/chatgpt";
 import { getConversationHistory as getConversationHistoryFromDeepseek } from "../lib/deepseek";
 
 import { addNewConversationsAndRefresh } from "../lib/state/conversations.svelte";
@@ -117,7 +117,7 @@ chrome.action.onClicked.addListener(async () => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (request.action === "download_conversation_history_deepseek"
     ? getConversationHistoryFromDeepseek(request.token)
-    : getConversationHistory()
+    : getConversationHistoryFromChatGPT()
   )
     .then(async (res) => {
       console.log("DONE");
