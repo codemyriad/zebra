@@ -115,18 +115,18 @@ chrome.action.onClicked.addListener(async () => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "download_conversation_history") {
-    console.log("download_conversation_history RECIEVED");
-    getConversationHistoryFromDeepseek(request.token)
-      .then(async (res) => {
-        console.log("DONE");
-        await addNewConversationsAndRefresh(res);
-        console.log({ res });
-        sendResponse({ status: "success", data: res });
-      })
-      .catch((error) => {
-        sendResponse({ status: "error", error: error.message });
-      });
-    return true; // Indicate that the response will be sent asynchronously
-  }
+  (request.action === "download_conversation_history_deepseek"
+    ? getConversationHistoryFromDeepseek(request.token)
+    : getConversationHistory()
+  )
+    .then(async (res) => {
+      console.log("DONE");
+      await addNewConversationsAndRefresh(res);
+      console.log({ res });
+      sendResponse({ status: "success", data: res });
+    })
+    .catch((error) => {
+      sendResponse({ status: "error", error: error.message });
+    });
+  return true; // Indicate that the response will be sent asynchronously
 });
