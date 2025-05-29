@@ -80,6 +80,13 @@ END;
 // Check if we're in a service worker context
 const isServiceWorker = typeof self !== "undefined" && !self.window;
 
+if (
+  globalThis.location &&
+  globalThis.location.pathname.endsWith("/offscreen.html")
+) {
+  // This code is running in the offscreen document
+  console.log("Running in offscreen.html");
+}
 // Initialize SQLite with OPFS support
 export async function initSqlite(): Promise<SqliteDb | null> {
   console.log("Initializing SQLite WASM...");

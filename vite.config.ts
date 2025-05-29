@@ -16,6 +16,7 @@ export default defineConfig({
         popup: resolve(__dirname, "src/popup/popup.html"),
         background: resolve(__dirname, "src/background/index.ts"),
         content_chatgpt: resolve(__dirname, "src/content/chatgpt.ts"),
+        content_deepseek: resolve(__dirname, "src/content/deepseek.ts"),
         content_claude: resolve(__dirname, "src/content/claude.ts"),
         options: resolve(__dirname, "src/options/options.html"),
         app: resolve(__dirname, "src/app.css"),

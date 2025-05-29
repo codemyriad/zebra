@@ -12,6 +12,8 @@ export let selectedConversation = $state<Conversation>({
 });
 
 let activeSearchQuery = $state("");
+let activeSearchSource = $state<string | undefined>(undefined);
+
 let searchOffset = $state(0);
 let searchIsLoading = $state(false);
 let searchHasMore = $state(true);
@@ -57,41 +59,63 @@ export function getIsSearchLoading() {
 export function getSearchHasMore() {
   return searchHasMore;
 }
-// --- New functions for search pagination ---
-export async function executeNewSearch(query: string) {
-  if (!query.trim()) {
+export async function executeNewSearch(query: string, source?: string) {
+  activeSearchQuery = query.trim();
+  activeSearchSource = source;
+
+  if (!activeSearchQuery && !activeSearchSource) {
     conversationsResult.length = 0;
-    activeSearchQuery = "";
+    // activeSearchQuery is already ""
+    // activeSearchSource is already undefined
     searchOffset = 0;
     searchHasMore = true; // Reset, or false if query is empty
     if (selectedConversation.id && conversationsResult.length === 0) {
       // Optionally clear selectedConversation if no search results
-      // setSelectedConversation({ id: "", title: "", created_at: 0, updated_at: 0, messages: [], source: "" });
+      // setSelectedConversation({ id: "", title: "", created_at: 0, updated_at:
+      // 0, messages: [], source: "" });
     }
     return;
   }
 
   searchIsLoading = true;
-  activeSearchQuery = query;
   searchOffset = 0;
   conversationsResult.length = 0; // Clear previous results for a new search
   searchHasMore = true; // Assume there might be results
+
+  let sql = `
+SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
+c.meta, c.tags, c.content
+FROM conversations c
+JOIN conversations_fts_idx fts ON c.id = fts.rowid_original_conversations
+`;
+  const params: any[] = [];
+  const whereClauses: string[] = [];
+
+  if (activeSearchQuery) {
+    whereClauses.push("conversations_fts_idx MATCH ?");
+    params.push(activeSearchQuery);
+  }
+  if (activeSearchSource) {
+    whereClauses.push("c.source = ?");
+    params.push(activeSearchSource);
+  }
+
+  if (whereClauses.length > 0) {
+    sql += " WHERE " + whereClauses.join(" AND ");
+  }
+
+  sql += `
+ORDER BY rank
+LIMIT ? OFFSET ?
+`;
+  params.push(SEARCH_PAGE_SIZE, searchOffset);
 
   return new Promise<void>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
         type: "EXECUTE_QUERY",
-        sql: `
-SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
-c.meta, c.tags, c.content
-FROM conversations c
-JOIN conversations_fts_idx fts ON c.id =
-fts.rowid_original_conversations
-WHERE conversations_fts_idx MATCH ?
-ORDER BY rank
-LIMIT ? OFFSET ?
-`,
-        params: [activeSearchQuery, SEARCH_PAGE_SIZE, searchOffset],
+        sql: sql,
+        params: params,
       },
       (response) => {
         searchIsLoading = false;
@@ -133,26 +157,49 @@ LIMIT ? OFFSET ?
 }
 
 export async function loadMoreSearchResults() {
-  if (searchIsLoading || !searchHasMore || !activeSearchQuery) {
+  if (
+    searchIsLoading ||
+    !searchHasMore ||
+    (!activeSearchQuery && !activeSearchSource)
+  ) {
     return;
   }
   searchIsLoading = true;
+
+  let sql = `
+SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
+c.meta, c.tags, c.content
+FROM conversations c
+JOIN conversations_fts_idx fts ON c.id = fts.rowid_original_conversations
+`;
+  const params: any[] = [];
+  const whereClauses: string[] = [];
+
+  if (activeSearchQuery) {
+    whereClauses.push("conversations_fts_idx MATCH ?");
+    params.push(activeSearchQuery);
+  }
+  if (activeSearchSource) {
+    whereClauses.push("c.source = ?");
+    params.push(activeSearchSource);
+  }
+
+  if (whereClauses.length > 0) {
+    sql += " WHERE " + whereClauses.join(" AND ");
+  }
+
+  sql += `
+ORDER BY rank
+LIMIT ? OFFSET ?
+`;
+  params.push(SEARCH_PAGE_SIZE, searchOffset);
 
   return new Promise<void>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
         type: "EXECUTE_QUERY",
-        sql: `
-SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
-c.meta, c.tags, c.content
-FROM conversations c
-JOIN conversations_fts_idx fts ON c.id =
-fts.rowid_original_conversations
-WHERE conversations_fts_idx MATCH ?
-ORDER BY rank
-LIMIT ? OFFSET ?
-`,
-        params: [activeSearchQuery, SEARCH_PAGE_SIZE, searchOffset],
+        sql: sql,
+        params: params,
       },
       (response) => {
         searchIsLoading = false;
@@ -214,7 +261,6 @@ export async function setConversationsResult(
       },
       (response) => {
         if (response.success) {
-          console.log("Query result:", response.result);
           conversationsResult.length = 0;
 
           for (const row of response.result.result.resultRows) {
@@ -268,10 +314,12 @@ export async function loadConversationsFromBackground() {
       (response) => {
         isLoading = false;
         if (response && response.success) {
-          // conversations.length = 0; // REMOVED: Do not clear for incremental loading
+          // conversations.length = 0; // REMOVED: Do not clear for incremental
+          // loading
 
           if (response.conversations && response.conversations.length > 0) {
-            // Select the first conversation only on the very first load if nothing is selected
+            // Select the first conversation only on the very first load if
+            // nothing is selected
             if (
               currentOffset === 0 &&
               conversations.length === 0 &&
@@ -294,7 +342,7 @@ export async function loadConversationsFromBackground() {
           }
 
           console.log(
-            "Shared Rune State: Conversations loaded/appended and state updated.",
+            "Shared Rune State: Conversations loaded/appended and state         updated.",
           );
           resolve();
         } else {
