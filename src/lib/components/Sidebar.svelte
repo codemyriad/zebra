@@ -58,11 +58,11 @@
     async function handleSearch(event: Event) {
         if (event instanceof KeyboardEvent && event.key === "Enter") {
             await executeNewSearch(searchQuery);
+
             // conversationsResult is updated reactively
             if (conversationsResult.length > 0) {
                 setSelectedConversation(conversationsResult[0]);
             }
-            // console.log(`Searching for: ${searchQuery}`); // Logging can be inside executeNewSearch
         }
     }
 
@@ -72,9 +72,10 @@
         }
     }
 
-    function selectSource(sourceId: string) {
+    async function selectSource(sourceId: string) {
         selectedSource = sourceId;
-        console.log(allConversationsStore);
+        await executeNewSearch(searchQuery, selectedSource);
+
         console.log(`Selected source: ${sourceId}`);
     }
 </script>
