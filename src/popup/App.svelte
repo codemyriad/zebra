@@ -114,7 +114,7 @@
                         const userToken = responseFromContentScript.token;
                         chrome.runtime.sendMessage(
                             {
-                                action: "download_conversation_history",
+                                action: "download_conversation_history_deepseek",
                                 token: JSON.parse(userToken).value,
                             },
                             (responseFromBackground) => {
