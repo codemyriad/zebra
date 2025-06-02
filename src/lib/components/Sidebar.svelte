@@ -19,6 +19,7 @@
         getSearchHasMore,
         setActiveSearchSource,
         setCurrentOffset,
+        setHasMoreConversationsToLoad,
     } from "../state/conversations.svelte";
     import { get } from "svelte/store";
 
@@ -77,6 +78,7 @@
         selectedSource = sourceId;
         setActiveSearchSource(sourceId);
         setCurrentOffset(0);
+        setHasMoreConversationsToLoad(true);
 
         await loadConversationsFromBackground();
         console.log(`Selected source: ${sourceId}`);
