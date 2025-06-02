@@ -3,6 +3,7 @@
         ChatGPTConversation,
         ClaudeConversation,
         Conversation,
+        DeepSeekConversationWithMapping,
         Message,
     } from "../types/content";
     import {
@@ -13,6 +14,7 @@
     import {
         convertChatGPTToDesiredFormat,
         convertClaudeToDesiredFormat,
+        convertDeepSeekToDesiredFormat,
     } from "../utils";
     let selectedFile: File | null = null;
     let jsonData: object;
@@ -45,14 +47,20 @@
             jsonData = JSON.parse(await selectedFile!.text());
 
             console.log("File content:", jsonData);
-            let convertedConvs =
-                selectedProvider === "claude"
-                    ? convertClaudeToDesiredFormat(
-                          jsonData as ClaudeConversation[],
-                      )
-                    : convertChatGPTToDesiredFormat(
-                          jsonData as ChatGPTConversation[],
-                      );
+            let convertedConvs = [];
+            if (selectedProvider === "claude") {
+                convertedConvs = convertClaudeToDesiredFormat(
+                    jsonData as ClaudeConversation[],
+                );
+            } else if (selectedProvider === "chatgpt") {
+                convertedConvs = convertChatGPTToDesiredFormat(
+                    jsonData as ChatGPTConversation[],
+                );
+            } else {
+                convertedConvs = convertDeepSeekToDesiredFormat(
+                    jsonData as DeepSeekConversationWithMapping[],
+                );
+            }
 
             console.log("Converted File content:", convertedConvs);
 
@@ -107,6 +115,19 @@
                         on:change={handleProviderChange}
                     />
                     <span class="label-text">Claude</span>
+                </label>
+            </div>
+            <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-2">
+                    <input
+                        class="radio radio-primary"
+                        type="radio"
+                        value="deepseek"
+                        name="provider"
+                        bind:group={selectedProvider}
+                        on:change={handleProviderChange}
+                    />
+                    <span class="label-text">DeepSeek</span>
                 </label>
             </div>
             {#if providerWarning}
