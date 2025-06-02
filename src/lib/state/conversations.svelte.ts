@@ -17,7 +17,7 @@ let activeSearchSource = $state<string | undefined>(undefined);
 let searchOffset = $state(0);
 let searchIsLoading = $state(false);
 let searchHasMore = $state(true);
-const SEARCH_PAGE_SIZE = 10; // Or your desired page size for search results
+const SEARCH_PAGE_SIZE = 10;
 
 let currentOffset = $state(0);
 let isLoading = $state(false);

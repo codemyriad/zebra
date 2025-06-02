@@ -6,7 +6,74 @@ import type {
   ClaudeContentBlock,
   ClaudeConversation,
   Message,
+  DeepSeekConversationWithMapping,
+  DeepSeekMappingItem,
+  DeepSeekMessageContent,
 } from "../types/content";
+
+export function convertDeepSeekToDesiredFormat(
+  deepSeekConversations: DeepSeekConversationWithMapping[],
+): Conversation[] {
+  return deepSeekConversations.map((dsConvo) => {
+    const messages: Message[] = [];
+    let rootNodeId: string | undefined = undefined;
+
+    // Find the root node (parent is "root")
+    // Note: Assumes there's one primary root for the main conversation thread.
+    for (const nodeId in dsConvo.mapping) {
+      if (dsConvo.mapping.hasOwnProperty(nodeId)) {
+        if (dsConvo.mapping[nodeId].parent === "root") {
+          rootNodeId = nodeId;
+          break;
+        }
+      }
+    }
+
+    if (rootNodeId) {
+      let currentNodeId: string | undefined = rootNodeId;
+      // Assumption: The first message from the root is 'user', then alternates.
+      // This is a common pattern but might not hold for all DeepSeek structures.
+      let currentAuthor: "user" | "assistant" = "user";
+
+      while (currentNodeId && dsConvo.mapping[currentNodeId]) {
+        const mappingItem: DeepSeekMappingItem = dsConvo.mapping[currentNodeId];
+        const rawMessage: DeepSeekMessageContent | null = mappingItem.message;
+
+        if (rawMessage) {
+          const createdAt = new Date(rawMessage.inserted_at).getTime();
+          const messageToAdd: Message = {
+            content: rawMessage.content,
+            author: currentAuthor,
+            created_at: createdAt,
+          };
+          messages.push(messageToAdd);
+
+          currentAuthor = currentAuthor === "user" ? "assistant" : "user";
+        }
+
+        // Traverse to the first child to maintain a linear conversation flow.
+        // This assumes the primary conversation path follows the first child.
+        if (mappingItem.children && mappingItem.children.length > 0) {
+          currentNodeId = mappingItem.children[0];
+        } else {
+          currentNodeId = undefined; // End of this branch
+        }
+      }
+    }
+
+    const conversation: Conversation = {
+      id: dsConvo.id,
+      title: dsConvo.title,
+      created_at: new Date(dsConvo.inserted_at).getTime(),
+      updated_at: new Date(dsConvo.updated_at).getTime(),
+      source: "deepseek", // Or a more specific identifier if available/needed
+      messages: messages,
+      // url and content (summary) fields are optional in Conversation type and not directly available
+      // in DeepSeekConversationWithMapping's top-level fields.
+    };
+    return conversation;
+  });
+}
 /**
  * Converts Claude API conversation data to the desired output format
  * @param claudeData - Array of Claude conversation objects

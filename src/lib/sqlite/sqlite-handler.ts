@@ -93,8 +93,10 @@ export async function initSqlite(): Promise<SqliteDb | null> {
 
   try {
     if (isServiceWorker) {
+      console.log("Initializing sqlite in service worker");
       return await initDirectSqlite();
     } else {
+      console.log("Initializing sqlite in separate worker");
       return await initWorkerSqlite();
     }
   } catch (error) {
