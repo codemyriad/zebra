@@ -216,7 +216,6 @@ export async function saveConversation(
     //   .join("\n\n");
     content = JSON.stringify(conversation.messages);
   }
-  console.log({ content });
 
   return executeWithTransaction(db, async (exec) => {
     await exec(
@@ -255,7 +254,6 @@ export async function saveConversations(
         //   .join("\n\n");
         content = JSON.stringify(conversation.messages);
       }
-      console.log({ content });
 
       await exec(
         `
@@ -285,35 +283,49 @@ export async function getConversations(
   db: SqliteDb,
   limit: number,
   offset: number,
+  source?: string,
 ): Promise<any[]> {
   try {
     let rows;
 
-    const sql = `
+    let sql = `
       SELECT id, source, title, created_at, updated_at, url, meta, tags, content
       FROM conversations
-      ORDER BY updated_at DESC
-      LIMIT ? OFFSET ?;
     `;
-    const bindParams = [limit, offset];
 
+    const params: any[] = [];
+    const whereClauses: string[] = [];
+
+    if (source && source !== "all") {
+      whereClauses.push("source = ?");
+      params.push(source);
+    }
+
+    if (whereClauses.length > 0) {
+      sql += " WHERE " + whereClauses.join(" AND ");
+    }
+
+    sql += `
+    ORDER BY updated_at DESC
+    LIMIT ? OFFSET ?;
+  `;
+    params.push(limit, offset);
     if (db.db) {
       rows = db.db.exec({
         sql,
-        bind: bindParams,
+        bind: params,
         returnValue: "resultRows",
       });
     } else if (db.promiser && db.dbId) {
       rows = await db.promiser("exec", {
         dbId: db.dbId,
         sql,
-        bind: bindParams,
+        bind: params,
         returnValue: "resultRows",
       });
     } else {
       throw new Error("Invalid database connection");
     }
-    console.log({ rows });
 
     return rows.result.resultRows.map((row: any) => ({
       id: row[0],

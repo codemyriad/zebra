@@ -33,6 +33,9 @@ export function getIsLoading() {
 export function getCurrentOffset() {
   return currentOffset;
 }
+export function setCurrentOffset(offset: number) {
+  currentOffset = offset;
+}
 
 export function getHasMoreConversationsToLoad() {
   return hasMoreConversationsToLoad;
@@ -59,6 +62,11 @@ export function getIsSearchLoading() {
 export function getSearchHasMore() {
   return searchHasMore;
 }
+
+export function setActiveSearchSource(source: string) {
+  activeSearchSource = source;
+}
+
 export async function executeNewSearch(query: string, source?: string) {
   activeSearchQuery = query.trim();
   activeSearchSource = source;
@@ -142,7 +150,7 @@ LIMIT ? OFFSET ?
             conversationsResult.push(conv);
           }
           searchOffset += newItems.length;
-          searchHasMore = newItems.length === SEARCH_PAGE_SIZE;
+          searchHasMore = newItems.length <= SEARCH_PAGE_SIZE;
           resolve();
         } else {
           const errorMsg =
@@ -295,7 +303,7 @@ export async function setConversationsResult(
 // Function to load conversations from the background script
 // and update the shared 'conversations' state.
 export async function loadConversationsFromBackground() {
-  if (isLoading || !hasMoreConversationsToLoad) {
+  if (isLoading || (!hasMoreConversationsToLoad && currentOffset)) {
     console.log(
       "Shared Rune State: Already loading or no more conversations toload.",
     );
@@ -309,13 +317,19 @@ export async function loadConversationsFromBackground() {
     chrome.runtime.sendMessage(
       {
         type: "GET_CONVERSATIONS",
-        payload: { limit: 50, offset: currentOffset },
+        payload: {
+          limit: 50,
+          offset: currentOffset,
+          source: activeSearchSource?.toLowerCase(),
+        },
       },
       (response) => {
         isLoading = false;
         if (response && response.success) {
-          // conversations.length = 0; // REMOVED: Do not clear for incremental
-          // loading
+          // clear conversations if selected source has no chats
+          if (!response.conversations.length && activeSearchSource) {
+            conversations.length = 0;
+          }
 
           if (response.conversations && response.conversations.length > 0) {
             // Select the first conversation only on the very first load if
@@ -326,6 +340,12 @@ export async function loadConversationsFromBackground() {
               !selectedConversation.id
             ) {
               setSelectedConversation(response.conversations[0]);
+            }
+
+            // if first time selecting a source aka offset is zero
+            // reset conversations array
+            if (currentOffset === 0 && activeSearchSource) {
+              conversations.length = 0;
             }
             for (const conv of response.conversations) {
               conversations.push(conv); // APPEND new conversations
@@ -342,7 +362,7 @@ export async function loadConversationsFromBackground() {
           }
 
           console.log(
-            "Shared Rune State: Conversations loaded/appended and state         updated.",
+            "Shared Rune State: Conversations loaded/appended and state updated.",
           );
           resolve();
         } else {
