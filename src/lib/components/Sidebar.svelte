@@ -17,6 +17,9 @@
         loadMoreSearchResults,
         getIsSearchLoading,
         getSearchHasMore,
+        filterBySource,
+        setActiveSearchSource,
+        setCurrentOffset,
     } from "../state/conversations.svelte";
     import { get } from "svelte/store";
 
@@ -28,7 +31,7 @@
         selectedConversation: Conversation | undefined;
     } = $props();
 
-    let selectedSource = $state("all");
+    let selectedSource = $state("");
     let conversationsLoading = getIsLoading();
     let currentOffset = getCurrentOffset();
     let hasMoreConversationsToLoad = getHasMoreConversationsToLoad();
@@ -49,7 +52,6 @@
     }
 
     function handleLoadMore() {
-        console.log(conversationsLoading, hasMoreConversationsToLoad);
         if (!conversationsLoading && hasMoreConversationsToLoad) {
             loadConversationsFromBackground();
         }
@@ -74,8 +76,11 @@
 
     async function selectSource(sourceId: string) {
         selectedSource = sourceId;
-        await executeNewSearch(searchQuery, selectedSource);
-
+        setActiveSearchSource(sourceId);
+        setCurrentOffset(0);
+        // await executeNewSearch(searchQuery, selectedSource);
+        // await filterBySource(sourceId);
+        await loadConversationsFromBackground();
         console.log(`Selected source: ${sourceId}`);
     }
 </script>
@@ -200,20 +205,17 @@ gap-y-8 bg-base-100"
             {:else}
                 <ul class="space-y-2">
                     {#each allConversationsStore as conversation (conversation.id)}
-                        {#if selectedSource === "all" || conversation.source.toLowerCase() === selectedSource}
-                            <li>
-                                <button
-                                    class="block p-2 hover:bg-base-300
-rounded-lg w-full text-left"
-                                    class:bg-base-200={conversation.id ===
-                                        selectedConversation?.id}
-                                    onclick={() =>
-                                        setSelectedConversation(conversation)}
-                                >
-                                    {conversation.title}
-                                </button>
-                            </li>
-                        {/if}
+                        <li>
+                            <button
+                                class="block p-2 hover:bg-base-300 rounded-lg w-full text-left"
+                                class:bg-base-200={conversation.id ===
+                                    selectedConversation?.id}
+                                onclick={() =>
+                                    setSelectedConversation(conversation)}
+                            >
+                                {conversation.title}
+                            </button>
+                        </li>
                     {/each}
                 </ul>
                 {#if conversationsLoading}

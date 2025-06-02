@@ -22,7 +22,7 @@ export function convertClaudeToDesiredFormat(
       title: conversation.name || "Untitled Conversation",
       created_at: new Date(conversation.created_at).getTime(),
       updated_at: new Date(conversation.updated_at).getTime(),
-      source: "Claude",
+      source: "claude",
       messages: [],
     };
 
@@ -71,7 +71,7 @@ export function convertChatGPTToDesiredFormat(
       title: conversation.title || "Untitled Conversation",
       created_at: conversation.create_time * 1000, // Convert to milliseconds
       updated_at: conversation.update_time * 1000,
-      source: "ChatGPT",
+      source: "chatgpt",
       messages: [],
     };
 

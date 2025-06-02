@@ -93,6 +93,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sqliteDb!,
         req.payload.limit,
         req.payload.offset,
+        req.payload.source || "",
       );
       return { conversations };
     },
