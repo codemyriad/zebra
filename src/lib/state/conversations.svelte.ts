@@ -358,11 +358,11 @@ export async function loadConversationsFromBackground() {
 
             if (response.conversations.length < 50) {
               // Fewer than limit means no more
-              hasMoreConversationsToLoad = false;
+              setHasMoreConversationsToLoad(false);
             }
           } else {
             // No conversations returned, so no more to load
-            hasMoreConversationsToLoad = false;
+            setHasMoreConversationsToLoad(false);
           }
 
           console.log(
