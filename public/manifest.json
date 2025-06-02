@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Zebra LLM Conversation Cache",
   "version": "0.1.0",
-  "description": "Caches conversations with LLMs (ChatGPT, Claude) and stores them locally using SQLite WASM.",
+  "description": "Caches conversations with LLMs (ChatGPT, Claude, DeepSeek) and stores them locally using SQLite WASM.",
   "permissions": [
     "storage",
     "activeTab",
@@ -10,7 +10,11 @@
     "unlimitedStorage",
     "offscreen"
   ],
-  "host_permissions": ["https://chatgpt.com/*", "https://claude.ai/*"],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://claude.ai/*",
+    "https://chat.deepseek.com/*"
+  ],
   "background": {
     "service_worker": "assets/background.js",
     "type": "module"
@@ -36,6 +40,11 @@
     {
       "matches": ["https://claude.ai/*"],
       "js": ["assets/content_claude.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://chat.deepseek.com/*"],
+      "js": ["assets/content_deepseek.js"],
       "run_at": "document_idle"
     }
   ],

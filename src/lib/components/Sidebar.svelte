@@ -17,6 +17,9 @@
         loadMoreSearchResults,
         getIsSearchLoading,
         getSearchHasMore,
+        setActiveSearchSource,
+        setCurrentOffset,
+        setHasMoreConversationsToLoad,
     } from "../state/conversations.svelte";
     import { get } from "svelte/store";
 
@@ -28,7 +31,7 @@
         selectedConversation: Conversation | undefined;
     } = $props();
 
-    let selectedSource = $state("all");
+    let selectedSource = $state("");
     let conversationsLoading = getIsLoading();
     let currentOffset = getCurrentOffset();
     let hasMoreConversationsToLoad = getHasMoreConversationsToLoad();
@@ -40,6 +43,7 @@
         { id: "all", name: "All", count: 0 },
         { id: "chatgpt", name: "ChatGPT", count: 0 },
         { id: "claude", name: "Claude", count: 0 },
+        { id: "deepseek", name: "DeepSeek", count: 0 },
     ];
 
     // Initial load if no conversations and more are available
@@ -48,7 +52,6 @@
     }
 
     function handleLoadMore() {
-        console.log(conversationsLoading, hasMoreConversationsToLoad);
         if (!conversationsLoading && hasMoreConversationsToLoad) {
             loadConversationsFromBackground();
         }
@@ -57,11 +60,11 @@
     async function handleSearch(event: Event) {
         if (event instanceof KeyboardEvent && event.key === "Enter") {
             await executeNewSearch(searchQuery);
+
             // conversationsResult is updated reactively
             if (conversationsResult.length > 0) {
                 setSelectedConversation(conversationsResult[0]);
             }
-            // console.log(`Searching for: ${searchQuery}`); // Logging can be inside executeNewSearch
         }
     }
 
@@ -71,9 +74,13 @@
         }
     }
 
-    function selectSource(sourceId: string) {
+    async function selectSource(sourceId: string) {
         selectedSource = sourceId;
-        // TODO: Filter conversations by source
+        setActiveSearchSource(sourceId);
+        setCurrentOffset(0);
+        setHasMoreConversationsToLoad(true);
+
+        await loadConversationsFromBackground();
         console.log(`Selected source: ${sourceId}`);
     }
 </script>
@@ -138,7 +145,7 @@ gap-y-8 bg-base-100"
 
         <!-- Search Result Conversation List -->
         <div class="grow overflow-y-auto">
-            <h3 class="font-medium mb-2">Search Result</h3>
+            <h2 class="font-medium mb-2">Search Result</h2>
             {#if conversationsResult.length === 0 && !searchIsLoading}
                 <div class="text-sm opacity-70 p-4 text-center">
                     Search for a keyword in the search bar above...
@@ -186,7 +193,7 @@ gap-y-8 bg-base-100"
         </div>
         <!-- Conversation List -->
         <div class="grow overflow-y-auto">
-            <h3 class="font-medium mb-2">All Conversations</h3>
+            <h2 class="font-medium mb-2">All Conversations</h2>
             {#if allConversationsStore.length === 0 && !conversationsLoading && !hasMoreConversationsToLoad}
                 <div class="text-sm opacity-70 p-4 text-center">
                     No conversations found. Try importing some.
@@ -198,20 +205,17 @@ gap-y-8 bg-base-100"
             {:else}
                 <ul class="space-y-2">
                     {#each allConversationsStore as conversation (conversation.id)}
-                        {#if selectedSource === "all" || conversation.source.toLowerCase() === selectedSource}
-                            <li>
-                                <button
-                                    class="block p-2 hover:bg-base-300
-rounded-lg w-full text-left"
-                                    class:bg-base-200={conversation.id ===
-                                        selectedConversation?.id}
-                                    onclick={() =>
-                                        setSelectedConversation(conversation)}
-                                >
-                                    {conversation.title}
-                                </button>
-                            </li>
-                        {/if}
+                        <li>
+                            <button
+                                class="block p-2 hover:bg-base-300 rounded-lg w-full text-left"
+                                class:bg-base-200={conversation.id ===
+                                    selectedConversation?.id}
+                                onclick={() =>
+                                    setSelectedConversation(conversation)}
+                            >
+                                {conversation.title}
+                            </button>
+                        </li>
                     {/each}
                 </ul>
                 {#if conversationsLoading}

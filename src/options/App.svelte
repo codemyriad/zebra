@@ -10,10 +10,13 @@
         loadConversationsFromBackground,
         getSelectedConversation,
         selectedConversation,
+        setConversationsResult,
     } from "../lib/state/conversations.svelte";
     import { executeQuery } from "../lib/sqlite/sqlite-handler";
 
-    let searchQuery = $state("");
+    const urlParams = new URLSearchParams();
+
+    let searchQuery = $state(urlParams.get("search") || "");
     // let selectedConversation = $state<Conversation>();
 
     onMount(() => {
@@ -30,10 +33,8 @@
                 },
             },
             async (response) => {
-                console.log({ response });
                 if (response.success) {
                     await loadConversationsFromBackground();
-                    console.log("Conversations:", response.conversations);
                 }
             },
         );
@@ -46,8 +47,9 @@
                     sql: "SELECT * FROM conversations WHERE source LIKE ?",
                     params: [`%${searchQuery}%`],
                 },
-                (response) => {
+                async (response) => {
                     if (response.success) {
+                        await setConversationsResult(response.result);
                         console.log("Query result:", response.result);
                     }
                 },

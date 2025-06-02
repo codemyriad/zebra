@@ -81,3 +81,27 @@ export interface ClaudeConversation {
   };
   chat_messages: ClaudeChatMessage[];
 }
+
+export interface DeepSeekMessageContent {
+  files: any[];
+  search_results: any | null;
+  model: string;
+  reasoning_content: any | null;
+  content: string;
+  inserted_at: string;
+}
+
+export interface DeepSeekMappingItem {
+  id: string;
+  parent: string | "root";
+  children: string[];
+  message: DeepSeekMessageContent | null;
+}
+
+export interface DeepSeekConversationWithMapping {
+  id: string;
+  title: string;
+  inserted_at: string; // ISO 8601 date string
+  updated_at: string; // ISO 8601 date string
+  mapping: Record<string, DeepSeekMappingItem>;
+}
