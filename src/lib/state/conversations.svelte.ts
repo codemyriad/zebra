@@ -41,6 +41,10 @@ export function getHasMoreConversationsToLoad() {
   return hasMoreConversationsToLoad;
 }
 
+export function setHasMoreConversationsToLoad(hasMore: boolean) {
+  hasMoreConversationsToLoad = hasMore;
+}
+
 export function setSelectedConversation(conversation: Conversation) {
   selectedConversation.created_at = conversation.created_at;
   selectedConversation.title = conversation.title;
