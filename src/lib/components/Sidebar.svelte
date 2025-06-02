@@ -17,7 +17,6 @@
         loadMoreSearchResults,
         getIsSearchLoading,
         getSearchHasMore,
-        filterBySource,
         setActiveSearchSource,
         setCurrentOffset,
     } from "../state/conversations.svelte";
@@ -78,8 +77,7 @@
         selectedSource = sourceId;
         setActiveSearchSource(sourceId);
         setCurrentOffset(0);
-        // await executeNewSearch(searchQuery, selectedSource);
-        // await filterBySource(sourceId);
+
         await loadConversationsFromBackground();
         console.log(`Selected source: ${sourceId}`);
     }
