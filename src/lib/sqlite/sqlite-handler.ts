@@ -24,7 +24,8 @@ const SCHEMA = `
 
 CREATE TABLE IF NOT EXISTS "images"(
 "filename" TEXT PRIMARY KEY,
-"data" BLOB NOT NULL
+"data" BLOB NOT NULL,
+"mime_type" TEXT NOT NULL
 );
 
 -- Create the FTS5 virtual table for searching title and content
@@ -437,12 +438,14 @@ export async function saveImage(
   db: SqliteDb,
   filename: string,
   data: ArrayBuffer,
+  mime_type: string,
 ): Promise<boolean> {
   return executeWithTransaction(db, async (exec) => {
-    await exec("INSERT INTO images (filename, data) VALUES (?, ?);", [
-      filename,
-      data,
-    ]);
+    const uint8ArrayData = new Uint8Array(data);
+    await exec(
+      "INSERT INTO images (filename, data, mime_type) VALUES (?, ?, ?);",
+      [filename, uint8ArrayData, mime_type],
+    );
   });
 }
 
@@ -469,7 +472,8 @@ export async function getImage(
       throw new Error("Invalid database connection");
     }
 
-    return rows.length > 0 ? rows[0][0] : null;
+    const arrayBuffer = new ArrayBuffer(rows[0][0]);
+    return rows.length > 0 ? arrayBuffer : null;
   } catch (error) {
     console.error("Error getting image:", error);
     return null;
