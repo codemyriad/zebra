@@ -7,6 +7,7 @@ specifiers:
   '@tsconfig/svelte': ^5.0.4
   '@types/chrome': ^0.0.268
   '@types/markdown-it': ^14.1.2
+  '@zip.js/zip.js': ^2.7.62
   assert: ^2.1.0
   autoprefixer: ^10.4.16
   daisyui: ^4.7.2
@@ -23,6 +24,7 @@ specifiers:
 
 dependencies:
   '@sqlite.org/sqlite-wasm': 3.49.1-build4
+  '@zip.js/zip.js': 2.7.62
   markdown-it: 14.1.0
 
 devDependencies:
@@ -668,6 +670,11 @@ packages:
       '@types/node': 22.15.18
     dev: true
     optional: true
+
+  /@zip.js/zip.js/2.7.62:
+    resolution: {integrity: sha512-OaLvZ8j4gCkLn048ypkZu29KX30r8/OfFF2w4Jo5WXFr+J04J+lzJ5TKZBVgFXhlvSkqNFQdfnY1Q8TMTCyBVA==}
+    engines: {bun: '>=0.7.0', deno: '>=1.0.0', node: '>=16.5.0'}
+    dev: false
 
   /acorn/8.14.1:
     resolution: {integrity: sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==}

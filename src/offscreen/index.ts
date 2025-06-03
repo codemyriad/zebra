@@ -112,7 +112,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return { result };
     },
     SAVE_IMAGE: async (req) => {
-      const result = await saveImage(sqliteDb!, req.filename, req.data);
+      const result = await saveImage(
+        sqliteDb!,
+        req.filename,
+        req.data,
+        req.mime_type,
+      );
       return { result };
     },
     GET_IMAGE: async (req) => {
