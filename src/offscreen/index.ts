@@ -7,6 +7,8 @@ import {
   executeQuery,
   type SqliteDb,
   saveConversations,
+  saveImage,
+  getImage,
 } from "../lib/sqlite/sqlite-handler";
 
 let sqliteDb: SqliteDb | null = null;
@@ -107,6 +109,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     },
     EXECUTE_QUERY: async (req) => {
       const result = await executeQuery(sqliteDb!, req.sql, req.params || []);
+      return { result };
+    },
+    SAVE_IMAGE: async (req) => {
+      const result = await saveImage(sqliteDb!, req.filename, req.data);
+      return { result };
+    },
+    GET_IMAGE: async (req) => {
+      const result = await getImage(sqliteDb!, req.filename);
       return { result };
     },
   };

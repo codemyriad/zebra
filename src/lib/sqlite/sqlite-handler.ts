@@ -22,6 +22,10 @@ const SCHEMA = `
     "content" TEXT NOT NULL
   );
 
+CREATE TABLE IF NOT EXISTS "images"(
+"filename" TEXT PRIMARY KEY,
+"data" BLOB NOT NULL
+);
 
 -- Create the FTS5 virtual table for searching title and content
 CREATE VIRTUAL TABLE IF NOT EXISTS "conversations_fts_idx" USING fts5(
@@ -426,5 +430,48 @@ export async function executeQuery(
   } catch (error) {
     console.error("Error executing query:", error);
     throw error;
+  }
+}
+
+export async function saveImage(
+  db: SqliteDb,
+  filename: string,
+  data: ArrayBuffer,
+): Promise<boolean> {
+  return executeWithTransaction(db, async (exec) => {
+    await exec("INSERT INTO images (filename, data) VALUES (?, ?);", [
+      filename,
+      data,
+    ]);
+  });
+}
+
+export async function getImage(
+  db: SqliteDb,
+  filename: string,
+): Promise<ArrayBuffer | null> {
+  try {
+    let rows;
+    if (db.db) {
+      rows = await db.db.exec({
+        sql: "SELECT data FROM images WHERE filename = ?;",
+        bind: [filename],
+        returnValue: "resultRows",
+      });
+    } else if (db.promiser && db.dbId) {
+      rows = await db.promiser("exec", {
+        dbId: db.dbId,
+        sql: "SELECT data FROM images WHERE filename = ?;",
+        bind: [filename],
+        returnValue: "resultRows",
+      });
+    } else {
+      throw new Error("Invalid database connection");
+    }
+
+    return rows.length > 0 ? rows[0][0] : null;
+  } catch (error) {
+    console.error("Error getting image:", error);
+    return null;
   }
 }
