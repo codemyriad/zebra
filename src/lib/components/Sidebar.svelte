@@ -34,7 +34,6 @@
     let selectedSource = $state("");
     let conversationsLoading = getIsLoading();
     let currentOffset = getCurrentOffset();
-    let hasMoreConversationsToLoad = getHasMoreConversationsToLoad();
 
     let searchIsLoading = getIsSearchLoading();
     let searchHasMore = getSearchHasMore();
@@ -47,12 +46,12 @@
     ];
 
     // Initial load if no conversations and more are available
-    if (allConversationsStore.length === 0 && hasMoreConversationsToLoad) {
+    if (allConversationsStore.length === 0 && getHasMoreConversationsToLoad()) {
         loadConversationsFromBackground();
     }
 
     function handleLoadMore() {
-        if (!conversationsLoading && hasMoreConversationsToLoad) {
+        if (!conversationsLoading && getHasMoreConversationsToLoad()) {
             loadConversationsFromBackground();
         }
     }
@@ -194,7 +193,7 @@ gap-y-8 bg-base-100"
         <!-- Conversation List -->
         <div class="grow overflow-y-auto">
             <h2 class="font-medium mb-2">All Conversations</h2>
-            {#if allConversationsStore.length === 0 && !conversationsLoading && !hasMoreConversationsToLoad}
+            {#if allConversationsStore.length === 0 && !conversationsLoading && !getHasMoreConversationsToLoad()}
                 <div class="text-sm opacity-70 p-4 text-center">
                     No conversations found. Try importing some.
                 </div>
@@ -223,7 +222,7 @@ gap-y-8 bg-base-100"
                         Loading more...
                     </div>
                 {/if}
-                {#if hasMoreConversationsToLoad && !conversationsLoading}
+                {#if getHasMoreConversationsToLoad() && !conversationsLoading}
                     <button
                         class="btn btn-sm btn-outline w-full mt-2"
                         onclick={handleLoadMore}
@@ -231,7 +230,7 @@ gap-y-8 bg-base-100"
                         Show more...
                     </button>
                 {/if}
-                {#if !hasMoreConversationsToLoad && allConversationsStore.length > 0}
+                {#if !getHasMoreConversationsToLoad() && allConversationsStore.length > 0}
                     <div class="text-sm opacity-70 p-4 text-center">
                         No more conversations.
                     </div>
