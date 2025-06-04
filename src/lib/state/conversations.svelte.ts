@@ -23,6 +23,9 @@ let currentOffset = $state(0);
 let isLoading = $state(false);
 let hasMoreConversationsToLoad = $state(true);
 
+//to store mappings from image filenames to their blob URLs
+export const imageMapping = $state(new Map<string, string>());
+
 export function getActiveSearchQuery() {
   return activeSearchQuery;
 }
