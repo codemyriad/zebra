@@ -100,22 +100,54 @@
                     currentWindow: true,
                 });
 
-                if (activeTab && activeTab.id) {
-                    const responseFromContentScript =
-                        await chrome.tabs.sendMessage(activeTab.id, {
-                            action: "get_localStorage_token",
-                            key: "userToken",
-                        });
-
+                if (activeTab && activeTab.id && activeTab.url) {
                     if (
-                        responseFromContentScript &&
-                        responseFromContentScript.token !== undefined
+                        activeTab.url.startsWith("https://chat.deepseek.com/")
                     ) {
-                        const userToken = responseFromContentScript.token;
+                        const responseFromContentScript =
+                            await chrome.tabs.sendMessage(activeTab.id, {
+                                action: "get_localStorage_token",
+                                key: "userToken",
+                            });
+
+                        if (
+                            responseFromContentScript &&
+                            responseFromContentScript.token !== undefined
+                        ) {
+                            const userToken = responseFromContentScript.token;
+                            chrome.runtime.sendMessage(
+                                {
+                                    action: "download_conversation_history_deepseek",
+                                    token: JSON.parse(userToken).value,
+                                },
+                                (responseFromBackground) => {
+                                    if (
+                                        responseFromBackground &&
+                                        responseFromBackground.success
+                                    ) {
+                                        console.log(
+                                            "DeepseekConversation downloaded successfully",
+                                        );
+                                    } else {
+                                        console.error(
+                                            "Failed to download Deepseek conversation:",
+                                            responseFromBackground?.error,
+                                        );
+                                    }
+                                },
+                            );
+                        } else {
+                            console.error(
+                                "Could not retrieve token from active tab's localStorage. Response:",
+                                responseFromContentScript,
+                            );
+                        }
+                    } else if (
+                        activeTab.url.startsWith("https://chatgpt.com/")
+                    ) {
                         chrome.runtime.sendMessage(
                             {
-                                action: "download_conversation_history_deepseek",
-                                token: JSON.parse(userToken).value,
+                                action: "download_conversation_history",
                             },
                             (responseFromBackground) => {
                                 if (
@@ -123,20 +155,15 @@
                                     responseFromBackground.success
                                 ) {
                                     console.log(
-                                        "Conversation downloaded successfully",
+                                        "ChatGPTConversation downloaded successfully",
                                     );
                                 } else {
                                     console.error(
-                                        "Failed to download conversation:",
+                                        "Failed to download ChatGPT conversation:",
                                         responseFromBackground?.error,
                                     );
                                 }
                             },
-                        );
-                    } else {
-                        console.error(
-                            "Could not retrieve token from active tab's localStorage. Response:",
-                            responseFromContentScript,
                         );
                     }
                 } else {
