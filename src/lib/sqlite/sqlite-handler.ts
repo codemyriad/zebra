@@ -437,18 +437,41 @@ export async function executeQuery(
 export async function saveImage(
   db: SqliteDb,
   filename: string,
-  data: ArrayBuffer,
+  data: Uint8Array,
   mime_type: string,
 ): Promise<boolean> {
   return executeWithTransaction(db, async (exec) => {
-    const uint8ArrayData = new Uint8Array(data);
     await exec(
-      "INSERT INTO images (filename, data, mime_type) VALUES (?, ?, ?);",
-      [filename, uint8ArrayData, mime_type],
+      `INSERT INTO images (filename, data, mime_type) VALUES (?, ?, ?)
+      ON CONFLICT(filename) DO UPDATE SET data = ?, mime_type = ?;`,
+      [filename, data, mime_type, data, mime_type],
     );
   });
 }
+export async function getImages(db: SqliteDb): Promise<ArrayBuffer[] | null> {
+  try {
+    let rows;
+    if (db.db) {
+      rows = await db.db.exec({
+        sql: "SELECT * FROM images;",
 
+        returnValue: "resultRows",
+      });
+    } else if (db.promiser && db.dbId) {
+      rows = await db.promiser("exec", {
+        dbId: db.dbId,
+        sql: "SELECT * FROM images;",
+        returnValue: "resultRows",
+      });
+    } else {
+      throw new Error("Invalid database connection");
+    }
+    return rows.result.resultRows;
+  } catch (error) {
+    console.error("Error getting images:", error);
+    return null;
+  }
+}
 export async function getImage(
   db: SqliteDb,
   filename: string,

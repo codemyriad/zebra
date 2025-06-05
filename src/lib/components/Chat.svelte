@@ -1,15 +1,76 @@
 <script lang="ts">
+    import { onDestroy } from "svelte";
+    import { getImageMapping } from "../state/conversations.svelte";
     import type { Conversation } from "../types/content";
     import markdownit from "markdown-it";
     const md = markdownit();
 
     let {
-        convs = [],
         selectedConversation,
+        imageMapping = new Map(),
     }: {
         convs: Conversation[];
         selectedConversation: Conversation | undefined;
+        imageMapping: Map<string, { data: Uint8Array; mimeType: string }>;
     } = $props();
+
+    // Keep track of active Object URLs to avoid leaks
+    const activeObjectURLs = new Map<string, string>();
+
+    function cleanupObjectUrls() {
+        activeObjectURLs.forEach((url, filename) => {
+            URL.revokeObjectURL(url);
+            activeObjectURLs.delete(filename);
+        });
+    }
+    onDestroy(() => cleanupObjectUrls());
+
+    // Clean up Object URLs when they're no longer needed
+    function revokeObjectUrl(filename: string) {
+        if (activeObjectURLs.has(filename)) {
+            URL.revokeObjectURL(activeObjectURLs.get(filename)!);
+            activeObjectURLs.delete(filename);
+        }
+    }
+
+    // Store the ORIGINAL renderer before we override it
+    const originalImageRenderer =
+        md.renderer.rules.image ||
+        function (tokens, idx, options, env, self) {
+            return self.renderToken(tokens, idx, options);
+        };
+
+    // Override the image renderer
+    md.renderer.rules.image = function (tokens, idx, options, env, self) {
+        const token = tokens[idx];
+        const originalSrc = token.attrGet("src");
+
+        if (originalSrc && getImageMapping().has(`sediment://${originalSrc}`)) {
+            const { data, mimeType } = getImageMapping().get(
+                `sediment://${originalSrc}`,
+            )!;
+
+            // Revoke previous URL (if any) to avoid leaks
+            revokeObjectUrl(originalSrc);
+
+            // Create a fresh Object URL
+            let blob;
+            try {
+                blob = new Blob([data], { type: mimeType });
+                console.log("Blob created successfully", blob);
+                const objectUrl = URL.createObjectURL(blob);
+                activeObjectURLs.set(originalSrc, objectUrl);
+                console.log("Object URL created successfully", objectUrl);
+                // Update the image src
+                token.attrSet("src", objectUrl);
+            } catch (err) {
+                console.error("Blob creation failed:", err);
+            }
+        }
+
+        // Fall back to default rendering
+        return originalImageRenderer(tokens, idx, options, env, self);
+    };
 </script>
 
 <div>
@@ -52,7 +113,9 @@ badge-outline">{selectedConversation.source}</span
                         <div
                             class="prose lg:prose-xl chat-bubble chat-bubble-primary"
                         >
-                            {@html md.render(msg.content)}
+                            {@html md.render(msg.content, {
+                                imageMapping,
+                            })}
                         </div>
                         <div class="chat-footer opacity-50"></div>
                     </div>

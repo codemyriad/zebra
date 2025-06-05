@@ -176,7 +176,10 @@ export function convertChatGPTToDesiredFormat(
         ) {
           const altText = node.message.metadata.image_gen_title;
           content = msgContent.parts
-            .map((part) => `![${altText}](${part.asset_pointer})`)
+            .map((part) => {
+              const filename = part.asset_pointer.split("://").pop();
+              return `![${altText}](${filename})`;
+            })
             .join("\n");
         }
 

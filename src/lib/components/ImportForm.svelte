@@ -47,12 +47,9 @@
             return; // Stop if there are any warnings
         }
 
-        console.log("Selected provider:", selectedProvider);
-
         try {
             jsonData = JSON.parse(await selectedFile!.text());
 
-            console.log("File content:", jsonData);
             let convertedConvs = [];
             if (selectedProvider === "claude") {
                 convertedConvs = convertClaudeToDesiredFormat(
@@ -89,7 +86,6 @@
         try {
             const entries = await zipReader.getEntries();
             for (const entry of entries) {
-                console.log(entry);
                 const filename = entry.filename.toLowerCase();
                 if (filename === "conversations.json") {
                     const content = await entry.getData(new TextWriter());
@@ -109,24 +105,27 @@
                     );
                     console.log(`Extracted JPEG ${entry.filename}:`, imageBlob);
                     // will then create an Object URL
-                    const arrayBuffer = await imageBlob.arrayBuffer();
                     chrome.runtime.sendMessage({
                         type: "SAVE_IMAGE",
                         filename: entry.filename,
-                        data: arrayBuffer,
+                        data: imageBlob,
                         mime_type: "image/jpeg",
                     });
                 } else if (filename.endsWith(".png")) {
                     const imageBlob = await entry.getData(
                         new BlobWriter("image/png"),
                     );
-                    console.log(`Extracted PNG ${entry.filename}:`, imageBlob);
                     const arrayBuffer = await imageBlob.arrayBuffer();
+                    const arrayBufferView = new Uint8Array(arrayBuffer);
+                    console.log(
+                        `Extracted PNG ${entry.filename}:`,
+                        arrayBufferView,
+                    );
 
                     chrome.runtime.sendMessage({
                         type: "SAVE_IMAGE",
                         filename: entry.filename,
-                        data: arrayBuffer,
+                        data: arrayBufferView,
                         mime_type: "image/png",
                     });
                 }

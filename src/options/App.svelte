@@ -1,18 +1,17 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { BotMessageSquare, Menu } from "lucide-svelte";
 
     import Sidebar from "../lib/components/Sidebar.svelte";
-    import type { Conversation } from "../lib/types/content";
     import Chat from "../lib/components/Chat.svelte";
     import {
         conversations,
         loadConversationsFromBackground,
-        getSelectedConversation,
         selectedConversation,
         setConversationsResult,
+        setImageMapping,
+        getImageMapping,
     } from "../lib/state/conversations.svelte";
-    import { executeQuery } from "../lib/sqlite/sqlite-handler";
 
     const urlParams = new URLSearchParams();
 
@@ -38,6 +37,17 @@
                 }
             },
         );
+        chrome.runtime.sendMessage(
+            {
+                type: "GET_IMAGES",
+            },
+
+            async (response) => {
+                if (response.success) {
+                    setImageMapping(response.result);
+                }
+            },
+        );
         if (urlSearchQuery) {
             searchQuery = urlSearchQuery;
             // TODO: Trigger search with the query
@@ -57,6 +67,9 @@
 
             console.log(`Searching for: ${searchQuery}`);
         }
+    });
+    onDestroy(() => {
+        // revokeImageMapping();
     });
 </script>
 
@@ -82,7 +95,11 @@
                 <BotMessageSquare size={64} />
 
                 {#if conversations.length}
-                    <Chat convs={conversations} {selectedConversation} />
+                    <Chat
+                        imageMapping={getImageMapping()}
+                        convs={conversations}
+                        {selectedConversation}
+                    />
                 {:else}
                     <p class="text-lg">
                         No conversations found. Start chatting with an LLM to

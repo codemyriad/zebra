@@ -9,6 +9,7 @@ import {
   saveConversations,
   saveImage,
   getImage,
+  getImages,
 } from "../lib/sqlite/sqlite-handler";
 
 let sqliteDb: SqliteDb | null = null;
@@ -112,16 +113,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return { result };
     },
     SAVE_IMAGE: async (req) => {
+      let imageData = req.data;
+      // Check if req.data is a plain object and needs conversion
+      if (
+        req.data &&
+        typeof req.data === "object" &&
+        !(req.data instanceof Uint8Array) &&
+        !(req.data instanceof ArrayBuffer)
+      ) {
+        // Attempt to convert from {0: byte, 1: byte, ...} structure
+        const values = Object.values(req.data);
+        if (values.every((v) => typeof v === "number")) {
+          imageData = new Uint8Array(values);
+        } else {
+          // Handle error: data is an object but not in the expected format
+          console.error(
+            "Received image data is an unexpected object format:",
+            req.data,
+          );
+          // Potentially send an error response
+          return { success: false, error: "Invalid image data format" };
+        }
+      }
+
       const result = await saveImage(
         sqliteDb!,
         req.filename,
-        req.data,
+        imageData, // Use the potentially converted imageData
         req.mime_type,
       );
       return { result };
     },
     GET_IMAGE: async (req) => {
       const result = await getImage(sqliteDb!, req.filename);
+      return { result };
+    },
+    GET_IMAGES: async (req) => {
+      const result = await getImages(sqliteDb!);
       return { result };
     },
   };
