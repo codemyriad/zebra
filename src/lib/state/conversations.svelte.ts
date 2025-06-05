@@ -24,7 +24,28 @@ let isLoading = $state(false);
 let hasMoreConversationsToLoad = $state(true);
 
 //to store mappings from image filenames to their blob URLs
-export const imageMapping = $state(new Map<string, string>());
+let imageMapping = $state(
+  new Map<string, { data: Uint8Array; mimeType: string }>(),
+);
+
+export function getImageMapping() {
+  return imageMapping;
+}
+
+export function setImageMapping(images: any[]) {
+  const map = new Map<string, { data: Uint8Array; mimeType: string }>();
+  images.map((image) => {
+    const filename = `sediment://${image[0].split("/").pop().split(".")[0].split("-")[0]}`;
+    const uint8Array = image[1];
+    const mime_type = image[2];
+    return map.set(filename, {
+      data: uint8Array,
+      mimeType: mime_type,
+    });
+  });
+  console.log("image mapping set to: ", map);
+  imageMapping = map;
+}
 
 export function getActiveSearchQuery() {
   return activeSearchQuery;
