@@ -9,6 +9,7 @@
         console.log("Zebra Popup App Mounted.");
         try {
             const response = await chrome.runtime.sendMessage({
+                target: "background",
                 greeting: "hello from popup",
             });
             console.log("Response from background in popup:", response);
@@ -114,6 +115,7 @@
                         const userToken = responseFromContentScript.token;
                         chrome.runtime.sendMessage(
                             {
+                                target: "background",
                                 action: "download_conversation_history_deepseek",
                                 token: JSON.parse(userToken).value,
                             },

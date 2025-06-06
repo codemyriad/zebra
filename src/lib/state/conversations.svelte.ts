@@ -149,6 +149,7 @@ LIMIT ? OFFSET ?
   return new Promise<void>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
+        target: "offscreen",
         type: "EXECUTE_QUERY",
         sql: sql,
         params: params,
@@ -233,6 +234,7 @@ LIMIT ? OFFSET ?
   return new Promise<void>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
+        target: "offscreen",
         type: "EXECUTE_QUERY",
         sql: sql,
         params: params,
@@ -283,6 +285,7 @@ export async function setConversationsResult(
   return new Promise<void>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
+        target: "offscreen",
         type: "EXECUTE_QUERY",
         sql: `
              SELECT c.id, c.source, c.title, c.created_at, c.updated_at, c.url,
@@ -344,6 +347,7 @@ export async function loadConversationsFromBackground() {
   return new Promise<void>((resolve, reject) => {
     chrome.runtime.sendMessage(
       {
+        target: "offscreen",
         type: "GET_CONVERSATIONS",
         payload: {
           limit: 50,
@@ -412,7 +416,7 @@ export async function addNewConversationsAndRefresh(
 ) {
   return new Promise<void>((resolve, reject) =>
     chrome.runtime.sendMessage(
-      { type: "SAVE_CONVERSATIONS", conversations: newConversationData },
+      { target: "offscreen", type: "SAVE_CONVERSATIONS", conversations: newConversationData },
       (response) => {
         if (response && response.success) {
           console.log(

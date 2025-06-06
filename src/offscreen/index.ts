@@ -69,6 +69,8 @@ async function initializeDatabase() {
 initializeDatabase();
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // Accept only messages explicitly addressed to the off-screen document
+  if (request?.target !== "offscreen") return false;
   console.log("Offscreen: Message received", request);
 
   if (!sqliteDb) {
@@ -162,12 +164,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.error(`Offscreen: Error processing ${request.type}:`, error);
         sendResponse({ success: false, error: error.message });
       });
-  } else {
-    console.warn("Offscreen: Unknown operation or malformed request", request);
-    sendResponse({
-      success: false,
-      error: "Offscreen: Unknown or malformed operation",
-    });
   }
 
   return true; // Indicate that the response will be sent asynchronously

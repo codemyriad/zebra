@@ -106,6 +106,7 @@
                     console.log(`Extracted JPEG ${entry.filename}:`, imageBlob);
                     // will then create an Object URL
                     chrome.runtime.sendMessage({
+                        target: "offscreen",
                         type: "SAVE_IMAGE",
                         filename: entry.filename,
                         data: imageBlob,
@@ -123,6 +124,7 @@
                     );
 
                     chrome.runtime.sendMessage({
+                        target: "offscreen",
                         type: "SAVE_IMAGE",
                         filename: entry.filename,
                         data: arrayBufferView,
