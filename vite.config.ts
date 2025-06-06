@@ -11,6 +11,8 @@ export default defineConfig({
   ],
   build: {
     outDir: "dist",
+    sourcemap: true,   // emit source-maps so DevTools shows original TS/Svelte
+    minify: false,     // keep the bundle readable
     rollupOptions: {
       input: {
         popup: resolve(__dirname, "src/popup/popup.html"),
