@@ -115,6 +115,7 @@ chrome.action.onClicked.addListener(async () => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request?.target && request.target !== "background") return false;
   if (request.action === "download_conversation_history_deepseek") {
     getConversationHistoryFromDeepseek(request.token)
       .then(async (res) => {

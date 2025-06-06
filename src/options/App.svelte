@@ -26,6 +26,7 @@
 
         chrome.runtime.sendMessage(
             {
+                target: "offscreen",
                 type: "GET_CONVERSATIONS",
                 payload: {
                     limit: 50,
@@ -43,6 +44,7 @@
             // TODO: Trigger search with the query
             chrome.runtime.sendMessage(
                 {
+                    target: "offscreen",
                     type: "EXECUTE_QUERY",
                     sql: "SELECT * FROM conversations WHERE source LIKE ?",
                     params: [`%${searchQuery}%`],
