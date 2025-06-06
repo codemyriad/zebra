@@ -2,7 +2,8 @@ console.log("Zebra Content Script loaded for DeepSeek.");
 
 // Example: Send a message to the background script
 chrome.runtime.sendMessage(
-  { greeting: "hello from deepseek content script" },
+  { target: "background",
+    greeting: "hello from deepseek content script" },
   (response) => {
     if (chrome.runtime.lastError) {
       console.error(
