@@ -9,6 +9,7 @@
         console.log("Zebra Popup App Mounted.");
         try {
             const response = await chrome.runtime.sendMessage({
+                target: "background",
                 greeting: "hello from popup",
             });
             console.log("Response from background in popup:", response);
@@ -147,6 +148,7 @@
                     ) {
                         chrome.runtime.sendMessage(
                             {
+                                target: "background",
                                 action: "download_conversation_history",
                             },
                             (responseFromBackground) => {
