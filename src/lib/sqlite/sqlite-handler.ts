@@ -22,6 +22,11 @@ const SCHEMA = `
     "content" TEXT NOT NULL
   );
 
+CREATE TABLE IF NOT EXISTS "images"(
+"filename" TEXT PRIMARY KEY,
+"data" BLOB NOT NULL,
+"mime_type" TEXT NOT NULL
+);
 
 -- Create the FTS5 virtual table for searching title and content
 CREATE VIRTUAL TABLE IF NOT EXISTS "conversations_fts_idx" USING fts5(
@@ -426,5 +431,74 @@ export async function executeQuery(
   } catch (error) {
     console.error("Error executing query:", error);
     throw error;
+  }
+}
+
+export async function saveImage(
+  db: SqliteDb,
+  filename: string,
+  data: Uint8Array,
+  mime_type: string,
+): Promise<boolean> {
+  return executeWithTransaction(db, async (exec) => {
+    await exec(
+      `INSERT INTO images (filename, data, mime_type) VALUES (?, ?, ?)
+      ON CONFLICT(filename) DO UPDATE SET data = ?, mime_type = ?;`,
+      [filename, data, mime_type, data, mime_type],
+    );
+  });
+}
+export async function getImages(db: SqliteDb): Promise<ArrayBuffer[] | null> {
+  try {
+    let rows;
+    if (db.db) {
+      rows = await db.db.exec({
+        sql: "SELECT * FROM images;",
+
+        returnValue: "resultRows",
+      });
+    } else if (db.promiser && db.dbId) {
+      rows = await db.promiser("exec", {
+        dbId: db.dbId,
+        sql: "SELECT * FROM images;",
+        returnValue: "resultRows",
+      });
+    } else {
+      throw new Error("Invalid database connection");
+    }
+    return rows.result.resultRows;
+  } catch (error) {
+    console.error("Error getting images:", error);
+    return null;
+  }
+}
+export async function getImage(
+  db: SqliteDb,
+  filename: string,
+): Promise<ArrayBuffer | null> {
+  try {
+    let rows;
+    if (db.db) {
+      rows = await db.db.exec({
+        sql: "SELECT data FROM images WHERE filename = ?;",
+        bind: [filename],
+        returnValue: "resultRows",
+      });
+    } else if (db.promiser && db.dbId) {
+      rows = await db.promiser("exec", {
+        dbId: db.dbId,
+        sql: "SELECT data FROM images WHERE filename = ?;",
+        bind: [filename],
+        returnValue: "resultRows",
+      });
+    } else {
+      throw new Error("Invalid database connection");
+    }
+
+    const arrayBuffer = new ArrayBuffer(rows[0][0]);
+    return rows.length > 0 ? arrayBuffer : null;
+  } catch (error) {
+    console.error("Error getting image:", error);
+    return null;
   }
 }

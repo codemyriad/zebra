@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "test:e2e": "node test/e2e/extension.test.js"
+    "test:e2e": "node test/e2e/extension.test.js",
+    "watch:debug": "vite build --watch --minify false --sourcemap"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
@@ -31,6 +32,7 @@
   },
   "dependencies": {
     "@sqlite.org/sqlite-wasm": "^3.49.1-build4",
+    "@zip.js/zip.js": "^2.7.62",
     "markdown-it": "^14.1.0"
   }
 }

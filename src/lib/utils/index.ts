@@ -158,12 +158,29 @@ export function convertChatGPTToDesiredFormat(
         let content = "";
         const msgContent = node.message.content;
 
-        if (msgContent.parts && Array.isArray(msgContent.parts)) {
+        if (
+          msgContent.parts &&
+          Array.isArray(msgContent.parts) &&
+          typeof msgContent.parts[0] === "string"
+        ) {
           content = msgContent.parts.join("\n");
         } else if (msgContent.text) {
           content = msgContent.text;
         } else if (msgContent.thoughts && Array.isArray(msgContent.thoughts)) {
           content = msgContent.thoughts.map((t) => t.content).join("\n");
+        } else if (
+          msgContent.parts &&
+          Array.isArray(msgContent.parts) &&
+          typeof msgContent.parts[0] === "object" &&
+          msgContent.content_type !== "text"
+        ) {
+          const altText = node.message.metadata.image_gen_title;
+          content = msgContent.parts
+            .map((part) => {
+              const filename = part.asset_pointer.split("://").pop();
+              return `![${altText}](${filename})`;
+            })
+            .join("\n");
         }
 
         if (content) {

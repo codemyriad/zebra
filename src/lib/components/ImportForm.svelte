@@ -12,6 +12,12 @@
         addNewConversationsAndRefresh,
     } from "../state/conversations.svelte";
     import {
+        BlobReader,
+        BlobWriter,
+        TextWriter,
+        ZipReader,
+    } from "@zip.js/zip.js";
+    import {
         convertChatGPTToDesiredFormat,
         convertClaudeToDesiredFormat,
         convertDeepSeekToDesiredFormat,
@@ -41,12 +47,9 @@
             return; // Stop if there are any warnings
         }
 
-        console.log("Selected provider:", selectedProvider);
-
         try {
             jsonData = JSON.parse(await selectedFile!.text());
 
-            console.log("File content:", jsonData);
             let convertedConvs = [];
             if (selectedProvider === "claude") {
                 convertedConvs = convertClaudeToDesiredFormat(
@@ -72,11 +75,79 @@
         }
     }
 
+    async function processZipFile(zipFile: File) {
+        if (!zipFile.name.endsWith(".zip")) {
+            fileWarning = "Invalid file format. Please select a ZIP file.";
+            return;
+        }
+
+        const blobReader = new BlobReader(zipFile);
+        const zipReader = new ZipReader(blobReader);
+        try {
+            const entries = await zipReader.getEntries();
+            for (const entry of entries) {
+                const filename = entry.filename.toLowerCase();
+                if (filename === "conversations.json") {
+                    const content = await entry.getData(new TextWriter());
+                    const jsonData = JSON.parse(content);
+
+                    /** @TODO handle other sources */
+                    const convertedConvs = convertChatGPTToDesiredFormat(
+                        jsonData as ChatGPTConversation[],
+                    );
+                    await addNewConversationsAndRefresh(convertedConvs);
+                } else if (
+                    filename.endsWith(".jpeg") ||
+                    filename.endsWith(".jpg")
+                ) {
+                    const imageBlob = await entry.getData(
+                        new BlobWriter("image/jpeg"),
+                    );
+                    console.log(`Extracted JPEG ${entry.filename}:`, imageBlob);
+                    // will then create an Object URL
+                    chrome.runtime.sendMessage({
+                        type: "SAVE_IMAGE",
+                        filename: entry.filename,
+                        data: imageBlob,
+                        mime_type: "image/jpeg",
+                    });
+                } else if (filename.endsWith(".png")) {
+                    const imageBlob = await entry.getData(
+                        new BlobWriter("image/png"),
+                    );
+                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const arrayBufferView = new Uint8Array(arrayBuffer);
+                    console.log(
+                        `Extracted PNG ${entry.filename}:`,
+                        arrayBufferView,
+                    );
+
+                    chrome.runtime.sendMessage({
+                        type: "SAVE_IMAGE",
+                        filename: entry.filename,
+                        data: arrayBufferView,
+                        mime_type: "image/png",
+                    });
+                }
+            }
+            fileWarning =
+                "Finished processing ZIP file. Check console for details.";
+        } catch (error) {
+            fileWarning = `Error processing ZIP file: ${error.message}`;
+            console.error("Error processing ZIP file:", error);
+        } finally {
+            await zipReader.close();
+        }
+    }
     function handleFileChange(e: Event) {
         const target = e.target as HTMLInputElement;
         if (target.files && target.files.length > 0) {
             selectedFile = target.files[0];
             fileWarning = ""; // Clear warning when a file is selected
+
+            if (selectedFile.type === "application/zip") {
+                processZipFile(selectedFile);
+            }
         } else {
             selectedFile = null;
         }
@@ -159,7 +230,7 @@
 w-full"
                     type="file"
                     id="file-upload"
-                    accept="application/json, text/json"
+                    accept=".zip, application/json, text/json"
                     on:change={handleFileChange}
                 />
                 {#if fileWarning}
