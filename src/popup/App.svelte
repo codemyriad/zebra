@@ -7,28 +7,29 @@
 
     onMount(async () => {
         console.log("Zebra Popup App Mounted.");
-        try {
-            const response = await chrome.runtime.sendMessage({
-                greeting: "hello from popup",
-            });
-            console.log("Response from background in popup:", response);
-            if (response && response.farewell) {
-                messageFromBackground = response.farewell;
-            } else {
-                messageFromBackground =
-                    "No response or unexpected response format.";
-            }
-        } catch (error) {
-            console.error("Error sending message from popup:", error);
-            messageFromBackground = `Error: ${error.message}`;
-            if (chrome.runtime.lastError) {
-                console.error(
-                    "Chrome runtime error:",
-                    chrome.runtime.lastError.message,
-                );
-                messageFromBackground += ` | Chrome Error: ${chrome.runtime.lastError.message}`;
-            }
-        }
+        // try {
+        //     const response = await chrome.runtime.sendMessage({
+        //         target: "background",
+        //         greeting: "hello from popup",
+        //     });
+        //     console.log("Response from background in popup:", response);
+        //     if (response && response.farewell) {
+        //         messageFromBackground = response.farewell;
+        //     } else {
+        //         messageFromBackground =
+        //             "No response or unexpected response format.";
+        //     }
+        // } catch (error) {
+        //     console.error("Error sending message from popup:", error);
+        //     messageFromBackground = `Error: ${error.message}`;
+        //     if (chrome.runtime.lastError) {
+        //         console.error(
+        //             "Chrome runtime error:",
+        //             chrome.runtime.lastError.message,
+        //         );
+        //         messageFromBackground += ` | Chrome Error: ${chrome.runtime.lastError.message}`;
+        //     }
+        // }
     });
 
     function openOptionsPage(query = "") {
@@ -115,6 +116,8 @@
                             responseFromContentScript.token !== undefined
                         ) {
                             const userToken = responseFromContentScript.token;
+                            messageFromBackground =
+                                "Synching conversations from Deepseek";
                             chrome.runtime.sendMessage(
                                 {
                                     action: "download_conversation_history_deepseek",
@@ -123,20 +126,27 @@
                                 (responseFromBackground) => {
                                     if (
                                         responseFromBackground &&
-                                        responseFromBackground.success
+                                        responseFromBackground.status ===
+                                            "success"
                                     ) {
+                                        messageFromBackground =
+                                            "Deepseek Conversations downloaded successfully";
                                         console.log(
-                                            "DeepseekConversation downloaded successfully",
+                                            "Deepseek Conversations downloaded successfully",
                                         );
                                     } else {
+                                        messageFromBackground =
+                                            "Could not download Deepseek Conversations";
                                         console.error(
-                                            "Failed to download Deepseek conversation:",
+                                            "Failed to download Deepseek Conversations:",
                                             responseFromBackground?.error,
                                         );
                                     }
                                 },
                             );
                         } else {
+                            messageFromBackground =
+                                "Could not retrieve deepseek token";
                             console.error(
                                 "Could not retrieve token from active tab's localStorage. Response:",
                                 responseFromContentScript,
@@ -145,22 +155,28 @@
                     } else if (
                         activeTab.url.startsWith("https://chatgpt.com/")
                     ) {
+                        messageFromBackground =
+                            "Synching conversations from ChatGPT";
                         chrome.runtime.sendMessage(
                             {
+                                target: "background",
                                 action: "download_conversation_history",
                             },
                             (responseFromBackground) => {
                                 if (
                                     responseFromBackground &&
-                                    responseFromBackground.success
+                                    responseFromBackground.status === "success"
                                 ) {
+                                    messageFromBackground =
+                                        "ChatGPT conversations downloaded successfully";
                                     console.log(
-                                        "ChatGPTConversation downloaded successfully",
+                                        "ChatGPT conversations downloaded successfully",
                                     );
                                 } else {
+                                    messageFromBackground = `Failed to download ChatGPT conversations`;
                                     console.error(
-                                        "Failed to download ChatGPT conversation:",
-                                        responseFromBackground?.error,
+                                        "Failed to download ChatGPT conversations:",
+                                        responseFromBackground,
                                     );
                                 }
                             },
