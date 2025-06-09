@@ -112,6 +112,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return { result };
     },
   };
+  if (request?.target && request.target !== "offscreen") return false;
+
   if (request && request.type && operations[request.type]) {
     operations[request.type](request)
       .then((result) => {
